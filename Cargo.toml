@@ -11,7 +11,7 @@ version = "0.1.0"
 edition = "2024"
 license = "GPL-3.0-or-later"
 authors = ["Goldy"]
-description = "High-performance torrent title parsing and ranking for Python, powered by Rust."
+description = "A high-performance Rust implementation of The Best Damn Filename Parser You've Ever Used!"
 homepage = "https://github.com/g0ldyy/torrent-parse-rank"
 repository = "https://github.com/g0ldyy/torrent-parse-rank"
 

@@ -1,7 +1,7 @@
 <h1 align="center" id="title">torrent-parse-rank</h1>
 
 <p align="center">
-  High-performance torrent title parsing and ranking for Python, powered by Rust.
+  A high-performance Rust implementation of The Best Damn Filename Parser You've Ever Used!
 </p>
 
 <p align="center">
@@ -12,8 +12,8 @@
 
 ## Credits
 
-- Upstream RTN reference: https://github.com/dreulavelle/rank-torrent-name
 - Upstream PTT reference: https://github.com/dreulavelle/PTT
+- Upstream RTN reference: https://github.com/dreulavelle/rank-torrent-name
 
 ## What You Get
 
@@ -40,29 +40,6 @@ Notes:
 
 - Installing from source requires a Rust toolchain (`cargo`) available in `PATH`.
 - The import names are `PTT` and `RTN`.
-
-## Use It In 60 Seconds
-
-```bash
-uv init tpr-demo
-cd tpr-demo
-uv add --editable /absolute/path/to/torrent-parse-rank
-uv run python - <<'PY'
-from PTT import parse_title
-from RTN import RTN
-from RTN.models import DefaultRanking, SettingsModel
-
-title = "The.Walking.Dead.S05E03.1080p.WEB-DL.DD5.1.H264-ASAP"
-print(parse_title(title, False)["title"])
-
-rtn = RTN(SettingsModel(), DefaultRanking())
-item = rtn.rank(
-    raw_title=title,
-    infohash="c08a9ee8ce3a5c2c08865e2b05406273cabc97e7",
-)
-print({"fetch": item.fetch, "rank": item.rank, "parsed_title": item.data.parsed_title})
-PY
-```
 
 ## Quickstart
 
@@ -123,8 +100,6 @@ cd torrent-parse-rank
 
 ## Benchmarks
 
-Latest measured run: **2026-03-18**
-
 Python API speedup vs upstream (`PTT` + `RTN`): **~3.20x** geometric-mean throughput.
 
 | Parser (N=30,000) | Upstream Python (items/s) | Rust port (items/s) | Speedup | Upstream p50 (ms) | Rust p50 (ms) |
@@ -133,17 +108,3 @@ Python API speedup vs upstream (`PTT` + `RTN`): **~3.20x** geometric-mean throug
 | `RTN.parse` | 1,726.1 | 5,446.9 | 3.16x | 0.583 | 0.183 |
 
 Full benchmark report: [`benchmarks/README.md`](benchmarks/README.md)
-
-```bash
-cd torrent-parse-rank
-uv run scripts/bench_compare.py | tee benchmarks/python_vs_rust_YYYY-MM-DD.csv
-cargo bench -p ptt-core --bench ptt_bench
-cargo bench -p rtn-core --bench rtn_bench
-```
-
-## Repository Layout
-
-- `crates/ptt-core`: native parser core.
-- `crates/rtn-core`: native ranking/fetch core.
-- `python/torrent_parse_rank_native`: PyO3 extension module.
-- `python/PTT`, `python/RTN`: Python compatibility/public APIs.
