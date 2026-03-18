@@ -29,9 +29,20 @@ mkdir -p "${CACHE_DIR}" "${OUT_DIR}/ptt" "${OUT_DIR}/rtn"
 fetch_repo "PTT" "${PTT_UPSTREAM_URL}" "${PTT_UPSTREAM_BRANCH}"
 fetch_repo "RTN" "${RTN_UPSTREAM_URL}" "${RTN_UPSTREAM_BRANCH}"
 
+PTT_SHA="$(git -C "${CACHE_DIR}/PTT" rev-parse HEAD)"
+RTN_SHA="$(git -C "${CACHE_DIR}/RTN" rev-parse HEAD)"
+
 rsync -a --delete --exclude '__pycache__' "${CACHE_DIR}/PTT/tests/" "${OUT_DIR}/ptt/"
 rsync -a --delete --exclude '__pycache__' "${CACHE_DIR}/RTN/tests/" "${OUT_DIR}/rtn/"
 
 find "${OUT_DIR}" -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete
 
+cat > "${OUT_DIR}/.upstream-commits.txt" <<EOF
+PTT=${PTT_SHA}
+RTN=${RTN_SHA}
+EOF
+
 echo "Fetched upstream tests to: ${OUT_DIR}"
+echo "Upstream commits:"
+echo "  PTT ${PTT_SHA}"
+echo "  RTN ${RTN_SHA}"
