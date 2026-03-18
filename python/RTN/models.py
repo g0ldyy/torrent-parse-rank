@@ -416,43 +416,70 @@ class CustomRank(BaseModel):
     use_custom_rank: bool = Field(default=False)
     rank: int = Field(default=0)
 
-    def model_dump(self, **kwargs) -> dict[str, Any]:
-        """Ensure serialization consistency."""
-        return super().model_dump(**kwargs)
+
+def _rank_true() -> CustomRank:
+    return CustomRank(fetch=True)
+
+
+def _rank_false() -> CustomRank:
+    return CustomRank(fetch=False)
+
+
+def _rank_field(fetch: bool = True, *, alias: str | None = None) -> Any:
+    factory = _rank_true if fetch else _rank_false
+    return Field(default_factory=factory, alias=alias)
+
+
+def _compile_pattern(pattern: "PatternType") -> Pattern:
+    if isinstance(pattern, str):
+        if pattern.startswith("/") and pattern.endswith("/"):
+            return regex.compile(pattern[1:-1])
+        return regex.compile(pattern, regex.IGNORECASE)
+    if isinstance(pattern, Pattern):
+        return pattern
+    raise ValueError(f"Invalid pattern type: {type(pattern)}")
+
+
+def _compile_pattern_list(values: Any) -> list[Pattern]:
+    if values is None:
+        return []
+    if not isinstance(values, (list, tuple)):
+        return []
+    return [_compile_pattern(value) for value in values]
 
 
 class QualityRankModel(ConfigModelBase):
     """Ranking configuration for quality attributes."""
 
-    av1: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    avc: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    bluray: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    dvd: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    hdtv: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    hevc: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    mpeg: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    remux: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    vhs: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    web: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    webdl: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    webmux: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    xvid: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
+    av1: CustomRank = _rank_field(fetch=False)
+    avc: CustomRank = _rank_field()
+    bluray: CustomRank = _rank_field()
+    dvd: CustomRank = _rank_field(fetch=False)
+    hdtv: CustomRank = _rank_field()
+    hevc: CustomRank = _rank_field()
+    mpeg: CustomRank = _rank_field(fetch=False)
+    remux: CustomRank = _rank_field(fetch=False)
+    vhs: CustomRank = _rank_field(fetch=False)
+    web: CustomRank = _rank_field()
+    webdl: CustomRank = _rank_field()
+    webmux: CustomRank = _rank_field(fetch=False)
+    xvid: CustomRank = _rank_field(fetch=False)
 
 
 class RipsRankModel(ConfigModelBase):
     """Ranking configuration for rips attributes."""
 
-    bdrip: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    brrip: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    dvdrip: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    hdrip: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    ppvrip: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    satrip: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    tvrip: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    uhdrip: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    vhsrip: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    webdlrip: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    webrip: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
+    bdrip: CustomRank = _rank_field(fetch=False)
+    brrip: CustomRank = _rank_field()
+    dvdrip: CustomRank = _rank_field(fetch=False)
+    hdrip: CustomRank = _rank_field()
+    ppvrip: CustomRank = _rank_field(fetch=False)
+    satrip: CustomRank = _rank_field(fetch=False)
+    tvrip: CustomRank = _rank_field(fetch=False)
+    uhdrip: CustomRank = _rank_field(fetch=False)
+    vhsrip: CustomRank = _rank_field(fetch=False)
+    webdlrip: CustomRank = _rank_field(fetch=False)
+    webrip: CustomRank = _rank_field()
 
 
 class HdrRankModel(ConfigModelBase):
@@ -464,50 +491,50 @@ class HdrRankModel(ConfigModelBase):
             return self.bit10
         return super().__getitem__(key)
 
-    bit10: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    dolby_vision: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    hdr: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    hdr10plus: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    sdr: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
+    bit10: CustomRank = _rank_field()
+    dolby_vision: CustomRank = _rank_field(fetch=False)
+    hdr: CustomRank = _rank_field()
+    hdr10plus: CustomRank = _rank_field()
+    sdr: CustomRank = _rank_field()
 
 
 class AudioRankModel(ConfigModelBase):
     """Ranking configuration for audio attributes."""
 
-    aac: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    atmos: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    dolby_digital: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    dolby_digital_plus: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    dts_lossy: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    dts_lossless: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    # opus: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    # pcm: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    flac: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    mono: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    mp3: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    stereo: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    surround: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    truehd: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
+    aac: CustomRank = _rank_field()
+    atmos: CustomRank = _rank_field()
+    dolby_digital: CustomRank = _rank_field()
+    dolby_digital_plus: CustomRank = _rank_field()
+    dts_lossy: CustomRank = _rank_field()
+    dts_lossless: CustomRank = _rank_field()
+    # opus: CustomRank = _rank_field()
+    # pcm: CustomRank = _rank_field()
+    flac: CustomRank = _rank_field()
+    mono: CustomRank = _rank_field(fetch=False)
+    mp3: CustomRank = _rank_field(fetch=False)
+    stereo: CustomRank = _rank_field()
+    surround: CustomRank = _rank_field()
+    truehd: CustomRank = _rank_field()
 
 
 class ExtrasRankModel(ConfigModelBase):
     """Ranking configuration for extras attributes."""
 
-    three_d: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False), alias="3d")
-    converted: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    documentary: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    dubbed: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    edition: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    hardcoded: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    network: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    proper: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    repack: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    retail: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    site: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    subbed: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    upscaled: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    scene: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
-    uncensored: CustomRank = Field(default_factory=lambda: CustomRank(fetch=True))
+    three_d: CustomRank = _rank_field(fetch=False, alias="3d")
+    converted: CustomRank = _rank_field(fetch=False)
+    documentary: CustomRank = _rank_field(fetch=False)
+    dubbed: CustomRank = _rank_field()
+    edition: CustomRank = _rank_field()
+    hardcoded: CustomRank = _rank_field()
+    network: CustomRank = _rank_field()
+    proper: CustomRank = _rank_field()
+    repack: CustomRank = _rank_field()
+    retail: CustomRank = _rank_field()
+    site: CustomRank = _rank_field(fetch=False)
+    subbed: CustomRank = _rank_field()
+    upscaled: CustomRank = _rank_field(fetch=False)
+    scene: CustomRank = _rank_field()
+    uncensored: CustomRank = _rank_field()
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -518,14 +545,14 @@ class ExtrasRankModel(ConfigModelBase):
 class TrashRankModel(ConfigModelBase):
     """Ranking configuration for trash attributes."""
 
-    cam: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    clean_audio: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    pdtv: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    r5: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    screener: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    size: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    telecine: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
-    telesync: CustomRank = Field(default_factory=lambda: CustomRank(fetch=False))
+    cam: CustomRank = _rank_field(fetch=False)
+    clean_audio: CustomRank = _rank_field(fetch=False)
+    pdtv: CustomRank = _rank_field(fetch=False)
+    r5: CustomRank = _rank_field(fetch=False)
+    screener: CustomRank = _rank_field(fetch=False)
+    size: CustomRank = _rank_field(fetch=False)
+    telecine: CustomRank = _rank_field(fetch=False)
+    telesync: CustomRank = _rank_field(fetch=False)
 
 
 class CustomRanksConfig(ConfigModelBase):
@@ -618,22 +645,8 @@ class SettingsModel(BaseModel):
     @model_validator(mode="before")
     def compile_and_validate_patterns(cls, values: dict[str, Any]) -> dict[str, Any]:
         """Compile string patterns to regex.Pattern, keeping compiled patterns unchanged."""
-
-        def compile_pattern(pattern: PatternType) -> Pattern:
-            """Helper function to compile a single pattern."""
-            if isinstance(pattern, str):
-                if pattern.startswith("/") and pattern.endswith("/"):  # case-sensitive
-                    return regex.compile(pattern[1:-1])
-                return regex.compile(pattern, regex.IGNORECASE)  # case-insensitive
-            elif isinstance(pattern, Pattern):
-                return pattern  # Keep already compiled patterns as is
-            raise ValueError(f"Invalid pattern type: {type(pattern)}")
-
         for field in ("require", "exclude", "preferred"):
-            if field not in values or values[field] is None:
-                values[field] = []
-            elif isinstance(values[field], (list, tuple)):
-                values[field] = [compile_pattern(p) for p in values[field]]
+            values[field] = _compile_pattern_list(values.get(field))
 
         return values
 
@@ -641,12 +654,6 @@ class SettingsModel(BaseModel):
     def serialize_patterns(self, values: list[PatternType]) -> list[str]:
         """Convert regex patterns to strings for JSON serialization."""
         return [v.pattern if isinstance(v, regex.Pattern) else v for v in values]
-
-    @field_validator("require", "exclude", "preferred", mode="before")
-    @classmethod
-    def deserialize_patterns(cls, values: list[str | PatternType]) -> list[PatternType]:
-        """Convert string patterns back to compiled regex."""
-        return [regex.compile(v) if isinstance(v, str) else v for v in values]
 
     def __getitem__(self, item: str) -> CustomRankDict:
         """Access custom rank settings via attribute keys."""

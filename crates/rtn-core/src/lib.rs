@@ -461,6 +461,21 @@ fn custom_rank_i64(settings: &Value, category: &str, key: &str, field: &str, def
         .unwrap_or(default)
 }
 
+fn deny_if_fetch_disabled(
+    settings: &Value,
+    failed_keys: &mut BTreeSet<String>,
+    category: &str,
+    key: &str,
+    failed_category: &str,
+    failed_key: &str,
+) -> bool {
+    if custom_rank_bool(settings, category, key, "fetch", true) {
+        return false;
+    }
+    failed_keys.insert(format!("{failed_category}_{failed_key}"));
+    true
+}
+
 fn expand_lang_set(langs: &mut HashSet<String>) {
     extend_lang_group(langs, "anime", ANIME_LANGS);
     extend_lang_group(langs, "non_anime", NON_ANIME_LANGS);
@@ -649,9 +664,8 @@ pub fn fetch_quality(
     };
 
     if let Some((category, key)) = quality_mapping(quality)
-        && !custom_rank_bool(settings, category, key, "fetch", true)
+        && deny_if_fetch_disabled(settings, failed_keys, category, key, category, key)
     {
-        failed_keys.insert(format!("{category}_{key}"));
         return true;
     }
 
@@ -669,11 +683,7 @@ pub fn fetch_codec(
     let Some(key) = codec_key(codec) else {
         return false;
     };
-    if !custom_rank_bool(settings, "quality", key, "fetch", true) {
-        failed_keys.insert(format!("codec_{key}"));
-        return true;
-    }
-    false
+    deny_if_fetch_disabled(settings, failed_keys, "quality", key, "codec", key)
 }
 
 pub fn fetch_audio(
@@ -685,8 +695,7 @@ pub fn fetch_audio(
         let Some((category, key)) = audio_mapping(audio) else {
             continue;
         };
-        if !custom_rank_bool(settings, category, key, "fetch", true) {
-            failed_keys.insert(format!("{category}_{key}"));
+        if deny_if_fetch_disabled(settings, failed_keys, category, key, category, key) {
             return true;
         }
     }
@@ -700,9 +709,8 @@ pub fn fetch_hdr(
 ) -> bool {
     for hdr in map_array(data, "hdr").iter().filter_map(Value::as_str) {
         if let Some(key) = hdr_key(hdr)
-            && !custom_rank_bool(settings, "hdr", key, "fetch", true)
+            && deny_if_fetch_disabled(settings, failed_keys, "hdr", key, "hdr", key)
         {
-            failed_keys.insert(format!("hdr_{key}"));
             return true;
         }
     }
@@ -717,9 +725,8 @@ pub fn fetch_other(
 ) -> bool {
     for &(attr, category, key) in EXTRA_RULES.iter().chain(EXTRA_FETCH_ONLY_RULES.iter()) {
         if value_is_active(data.get(attr))
-            && !custom_rank_bool(settings, category, key, "fetch", true)
+            && deny_if_fetch_disabled(settings, failed_keys, category, key, category, key)
         {
-            failed_keys.insert(format!("{category}_{key}"));
             return true;
         }
     }

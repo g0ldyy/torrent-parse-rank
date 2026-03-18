@@ -376,7 +376,7 @@ impl ParserEngine {
         post_process_result(raw_title, &mut result)?;
 
         if translate_languages && let Some(Value::Array(langs)) = result.get_mut("languages") {
-            let mut translated = Vec::new();
+            let mut translated = Vec::with_capacity(langs.len());
             for lang in langs.iter().filter_map(|v| v.as_str()) {
                 if let Some(name) = LANGUAGES_TRANSLATION_TABLE.get(lang) {
                     translated.push(Value::String((*name).to_owned()));
@@ -439,13 +439,20 @@ impl ParserEngine {
             is_before_title = g1.as_str().contains(&raw_match);
         }
 
-        let other_matches: Vec<&MatchInfo> = matched
-            .iter()
-            .filter_map(|(k, v)| if k != &handler.name { Some(v) } else { None })
-            .collect();
-        let is_skip_if_first = handler.options.skip_if_first
-            && !other_matches.is_empty()
-            && other_matches.iter().all(|m| m0.start() < m.match_index);
+        let mut has_other_match = false;
+        let mut all_before_others = true;
+        for (key, info) in matched.iter() {
+            if key == &handler.name {
+                continue;
+            }
+            has_other_match = true;
+            if m0.start() >= info.match_index {
+                all_before_others = false;
+                break;
+            }
+        }
+        let is_skip_if_first =
+            handler.options.skip_if_first && has_other_match && all_before_others;
 
         if is_skip_if_first {
             return Ok(None);

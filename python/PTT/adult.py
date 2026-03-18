@@ -11,7 +11,7 @@ def load_adult_keywords(filename: str = "combined-keywords.txt") -> set[str]:
     with open(keywords_file, encoding="utf-8") as f:
         for line in f:
             keyword = line.strip().lower()
-            if keyword and not keyword.isspace():
+            if keyword:
                 keywords.add(keyword)
 
     return keywords

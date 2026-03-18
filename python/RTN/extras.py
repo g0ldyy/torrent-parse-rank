@@ -42,15 +42,18 @@ def _validate_raw_title(raw_title: str, exc_type: type[Exception] = TypeError) -
         raise exc_type("The input title must be a non-empty string.")
 
 
-def _validate_similarity_inputs(
-    correct_title: str,
-    parsed_title: str,
-    threshold: float,
-) -> None:
+def _validate_similarity_inputs(correct_title: str, parsed_title: str, threshold: float) -> None:
     if not (correct_title and parsed_title):
         raise ValueError("Both titles must be provided.")
     if not isinstance(threshold, (int, float)) or not 0 <= threshold <= 1:
         raise ValueError("The threshold must be a number between 0 and 1.")
+
+
+def _validate_season_number(season_num: int) -> None:
+    if not season_num:
+        raise ValueError("The season number must be provided.")
+    if not isinstance(season_num, int) or season_num <= 0:
+        raise TypeError("The season number must be a positive integer.")
 
 
 def get_resolution(torrent: Torrent) -> Resolution:
@@ -86,19 +89,20 @@ def sort_torrents(
     if not isinstance(torrents, set) or not all(isinstance(t, Torrent) for t in torrents):
         raise TypeError("The input must be a set of Torrent objects.")
 
+    ranked: list[tuple[Resolution, Torrent]] = [
+        (get_resolution(torrent), torrent) for torrent in torrents
+    ]
     if resolutions:
-        torrents = {t for t in torrents if get_resolution(t) in resolutions}
+        ranked = [item for item in ranked if item[0] in resolutions]
 
-    sorted_torrents: list[Torrent] = sorted(
-        torrents,
-        key=lambda torrent: (get_resolution(torrent).value, torrent.rank),
+    ranked.sort(
+        key=lambda item: (item[0].value, item[1].rank),
         reverse=True,
     )
 
     if bucket_limit and bucket_limit > 0:
         bucket_groups: dict[Resolution, list[Torrent]] = {}
-        for torrent in sorted_torrents:
-            resolution = get_resolution(torrent)
+        for resolution, torrent in ranked:
             bucket_groups.setdefault(resolution, []).append(torrent)
 
         result = {}
@@ -107,7 +111,7 @@ def sort_torrents(
                 result[torrent.infohash] = torrent
         return result
 
-    return {torrent.infohash: torrent for torrent in sorted_torrents}
+    return {torrent.infohash: torrent for _, torrent in ranked}
 
 
 def extract_seasons(raw_title: str) -> list[int]:
@@ -121,10 +125,7 @@ def extract_episodes(raw_title: str) -> list[int]:
 
 
 def episodes_from_season(raw_title: str, season_num: int) -> list[int]:
-    if not season_num:
-        raise ValueError("The season number must be provided.")
-    if not isinstance(season_num, int) or season_num <= 0:
-        raise TypeError("The season number must be a positive integer.")
+    _validate_season_number(season_num)
     _validate_raw_title(raw_title, ValueError)
 
     return [int(v) for v in rtn_episodes_from_season(raw_title, season_num)]

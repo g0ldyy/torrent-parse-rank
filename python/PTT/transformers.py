@@ -22,18 +22,12 @@ def value(
 
 def integer(input_value: str) -> int | None:
     digits = re.sub(r"\D", "", input_value)
-    try:
-        return int(digits) if digits else None
-    except ValueError:
-        return None
+    return int(digits) if digits else None
 
 
 def first_integer(input_value: str) -> int | None:
     found = re.findall(r"\d+", input_value)
-    try:
-        return int(found[0]) if found else None
-    except ValueError:
-        return None
+    return int(found[0]) if found else None
 
 
 def boolean(*args, **kwargs) -> bool:
@@ -62,11 +56,15 @@ month_mapping = {
     r"\bNove\b": "Nov",
     r"\bDece\b": "Dec",
 }
+MONTH_PATTERNS = [
+    (re.compile(pattern, flags=re.IGNORECASE), replacement)
+    for pattern, replacement in month_mapping.items()
+]
 
 
 def convert_months(date_str: str) -> str:
-    for month, shortened in month_mapping.items():
-        date_str = re.sub(month, shortened, date_str, flags=re.IGNORECASE)
+    for month_re, shortened in MONTH_PATTERNS:
+        date_str = month_re.sub(shortened, date_str)
     return date_str
 
 
@@ -95,7 +93,7 @@ def date(date_format: str | list[str]) -> Callable[[str], str | None]:
             py_fmt = _normalize_custom_date_format(fmt)
             try:
                 return datetime.strptime(sanitized, py_fmt).strftime("%Y-%m-%d")
-            except Exception:
+            except ValueError:
                 continue
         return None
 
