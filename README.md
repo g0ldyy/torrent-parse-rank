@@ -123,9 +123,20 @@ cd torrent-parse-rank
 
 ## Benchmarks
 
+Latest measured run: **2026-03-18**
+
+Python API speedup vs upstream (`PTT` + `RTN`): **~3.20x** geometric-mean throughput.
+
+| Parser (N=30,000) | Upstream Python (items/s) | Rust port (items/s) | Speedup | Upstream p50 (ms) | Rust p50 (ms) |
+|---|---:|---:|---:|---:|---:|
+| `PTT.parse_title` | 1,832.2 | 5,763.9 | 3.15x | 0.550 | 0.173 |
+| `RTN.parse` | 1,726.1 | 5,446.9 | 3.16x | 0.583 | 0.183 |
+
+Full benchmark report: [`benchmarks/README.md`](benchmarks/README.md)
+
 ```bash
 cd torrent-parse-rank
-uv run scripts/bench_compare.py
+uv run scripts/bench_compare.py | tee benchmarks/python_vs_rust_YYYY-MM-DD.csv
 cargo bench -p ptt-core --bench ptt_bench
 cargo bench -p rtn-core --bench rtn_bench
 ```
