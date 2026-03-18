@@ -94,6 +94,7 @@ def create_handler_from_regexp(
     """
     Compatibility helper to build a Python handler from a regex-like object.
     """
+    param_count = len(inspect.signature(transformer).parameters)
 
     def handler(context: dict[str, Any]) -> dict[str, Any] | None:
         title = context["title"]
@@ -120,8 +121,6 @@ def create_handler_from_regexp(
 
         raw_match = match.group(0)
         clean_match = match.group(1) if len(match.groups()) >= 1 else raw_match
-        sig = inspect.signature(transformer)
-        param_count = len(sig.parameters)
         transformed = transformer(
             clean_match or raw_match, *([result.get(name)] if param_count > 1 else [])
         )

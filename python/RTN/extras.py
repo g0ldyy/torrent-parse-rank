@@ -37,6 +37,22 @@ RESOLUTION_MAP: dict[str, Resolution] = {
 }
 
 
+def _validate_raw_title(raw_title: str, exc_type: type[Exception] = TypeError) -> None:
+    if not raw_title or not isinstance(raw_title, str):
+        raise exc_type("The input title must be a non-empty string.")
+
+
+def _validate_similarity_inputs(
+    correct_title: str,
+    parsed_title: str,
+    threshold: float,
+) -> None:
+    if not (correct_title and parsed_title):
+        raise ValueError("Both titles must be provided.")
+    if not isinstance(threshold, (int, float)) or not 0 <= threshold <= 1:
+        raise ValueError("The threshold must be a number between 0 and 1.")
+
+
 def get_resolution(torrent: Torrent) -> Resolution:
     return RESOLUTION_MAP.get(torrent.data.resolution.lower(), Resolution.UNKNOWN)
 
@@ -47,12 +63,8 @@ def title_match(
     threshold: float = 0.85,
     aliases: dict | None = None,
 ) -> bool:
-    aliases = aliases or {}
-    if not (correct_title and parsed_title):
-        raise ValueError("Both titles must be provided.")
-    if not isinstance(threshold, (int, float)) or not 0 <= threshold <= 1:
-        raise ValueError("The threshold must be a number between 0 and 1.")
-    return rtn_title_match(correct_title, parsed_title, threshold, aliases_to_json(aliases))
+    _validate_similarity_inputs(correct_title, parsed_title, threshold)
+    return rtn_title_match(correct_title, parsed_title, threshold, aliases_to_json(aliases or {}))
 
 
 def get_lev_ratio(
@@ -61,12 +73,8 @@ def get_lev_ratio(
     threshold: float = 0.85,
     aliases: dict | None = None,
 ) -> float:
-    aliases = aliases or {}
-    if not (correct_title and parsed_title):
-        raise ValueError("Both titles must be provided.")
-    if not isinstance(threshold, (int, float)) or not 0 <= threshold <= 1:
-        raise ValueError("The threshold must be a number between 0 and 1.")
-    return rtn_get_lev_ratio(correct_title, parsed_title, threshold, aliases_to_json(aliases))
+    _validate_similarity_inputs(correct_title, parsed_title, threshold)
+    return rtn_get_lev_ratio(correct_title, parsed_title, threshold, aliases_to_json(aliases or {}))
 
 
 def sort_torrents(
@@ -103,14 +111,12 @@ def sort_torrents(
 
 
 def extract_seasons(raw_title: str) -> list[int]:
-    if not raw_title or not isinstance(raw_title, str):
-        raise TypeError("The input title must be a non-empty string.")
+    _validate_raw_title(raw_title)
     return [int(v) for v in rtn_extract_seasons(raw_title)]
 
 
 def extract_episodes(raw_title: str) -> list[int]:
-    if not raw_title or not isinstance(raw_title, str):
-        raise TypeError("The input title must be a non-empty string.")
+    _validate_raw_title(raw_title)
     return [int(v) for v in rtn_extract_episodes(raw_title)]
 
 
@@ -119,7 +125,6 @@ def episodes_from_season(raw_title: str, season_num: int) -> list[int]:
         raise ValueError("The season number must be provided.")
     if not isinstance(season_num, int) or season_num <= 0:
         raise TypeError("The season number must be a positive integer.")
-    if not raw_title or not isinstance(raw_title, str):
-        raise ValueError("The input title must be a non-empty string.")
+    _validate_raw_title(raw_title, ValueError)
 
     return [int(v) for v in rtn_episodes_from_season(raw_title, season_num)]

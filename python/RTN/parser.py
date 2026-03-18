@@ -82,12 +82,14 @@ def parse(
     if not raw_title or not isinstance(raw_title, str):
         raise TypeError("The input title must be a non-empty string.")
 
-    data: dict[str, Any] = rtn_parse(raw_title, translate_langs)
-    payload = dict(data)
-    payload["raw_title"] = raw_title
-    payload["parsed_title"] = data.get("title", data.get("parsed_title", ""))
-    payload["normalized_title"] = normalize_title(payload["parsed_title"])
-    payload["_3d"] = data.get("3d", data.get("_3d", False))
+    payload = dict(rtn_parse(raw_title, translate_langs))
+    payload.setdefault("raw_title", raw_title)
+
+    parsed_title = payload.get("parsed_title") or payload.get("title", "")
+    payload.setdefault("parsed_title", parsed_title)
+    payload.setdefault("normalized_title", normalize_title(str(parsed_title)))
+    payload.setdefault("_3d", payload.get("3d", False))
+
     parsed_data = ParsedData(**payload)
 
     if json:

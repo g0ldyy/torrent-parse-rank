@@ -1,7 +1,13 @@
-import json
 from typing import Any
 
+import orjson
 import regex
+
+_PATTERN_FIELDS = ("require", "exclude", "preferred")
+
+
+def _dumps(payload: Any) -> str:
+    return orjson.dumps(payload).decode("utf-8")
 
 
 def _serialize_pattern_item(item: Any) -> dict[str, Any] | None:
@@ -22,24 +28,23 @@ def _serialize_pattern_list(items: list[Any]) -> list[dict[str, Any] | None]:
 
 
 def pattern_list_to_json(items: list[Any]) -> str:
-    return json.dumps(_serialize_pattern_list(items), ensure_ascii=False)
+    return _dumps(_serialize_pattern_list(items))
 
 
 def settings_to_json(settings: Any) -> str:
     payload = settings.model_dump(mode="json", by_alias=True)
-    payload["require"] = _serialize_pattern_list(list(getattr(settings, "require", [])))
-    payload["exclude"] = _serialize_pattern_list(list(getattr(settings, "exclude", [])))
-    payload["preferred"] = _serialize_pattern_list(list(getattr(settings, "preferred", [])))
-    return json.dumps(payload, ensure_ascii=False)
+    for field in _PATTERN_FIELDS:
+        payload[field] = _serialize_pattern_list(list(getattr(settings, field, ())))
+    return _dumps(payload)
 
 
 def data_to_json(data: Any) -> str:
-    return json.dumps(data.model_dump(mode="json", by_alias=True), ensure_ascii=False)
+    return _dumps(data.model_dump(mode="json", by_alias=True))
 
 
 def rank_model_to_json(rank_model: Any) -> str:
-    return json.dumps(rank_model.model_dump(mode="json", by_alias=True), ensure_ascii=False)
+    return _dumps(rank_model.model_dump(mode="json", by_alias=True))
 
 
 def aliases_to_json(aliases: dict | None) -> str:
-    return json.dumps(aliases or {}, ensure_ascii=False)
+    return _dumps(aliases or {})

@@ -1,4 +1,4 @@
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeSet, HashSet};
 
 use fancy_regex::RegexBuilder;
 use ptt_core::parse_title;
@@ -44,6 +44,145 @@ fn map_i64s(map: &Map<String, Value>, key: &str) -> Vec<i64> {
         .and_then(Value::as_array)
         .map(|arr| arr.iter().filter_map(Value::as_i64).collect())
         .unwrap_or_default()
+}
+
+const ANIME_LANGS: &[&str] = &["ja", "zh", "ko"];
+const NON_ANIME_LANGS: &[&str] = &[
+    "de", "es", "hi", "ta", "ru", "ua", "th", "it", "ar", "pt", "fr", "pa", "mr", "gu", "te", "kn",
+    "ml", "vi", "id", "tr", "he", "fa", "el", "lt", "lv", "et", "pl", "cs", "sk", "hu", "ro", "bg",
+    "sr", "hr", "sl", "nl", "da", "fi", "sv", "no", "ms",
+];
+const COMMON_LANGS: &[&str] = &[
+    "de", "es", "hi", "ta", "ru", "ua", "th", "it", "zh", "ar", "fr",
+];
+
+const EXTRA_FETCH_RULES: [(&str, &str, &str); 17] = [
+    ("_3d", "extras", "three_d"),
+    ("converted", "extras", "converted"),
+    ("documentary", "extras", "documentary"),
+    ("dubbed", "extras", "dubbed"),
+    ("edition", "extras", "edition"),
+    ("hardcoded", "extras", "hardcoded"),
+    ("network", "extras", "network"),
+    ("proper", "extras", "proper"),
+    ("repack", "extras", "repack"),
+    ("retail", "extras", "retail"),
+    ("subbed", "extras", "subbed"),
+    ("upscaled", "extras", "upscaled"),
+    ("site", "extras", "site"),
+    ("size", "trash", "size"),
+    ("bit_depth", "hdr", "10bit"),
+    ("scene", "extras", "scene"),
+    ("uncensored", "extras", "uncensored"),
+];
+
+const EXTRA_RANK_RULES: [(&str, &str, &str); 15] = [
+    ("_3d", "extras", "three_d"),
+    ("converted", "extras", "converted"),
+    ("documentary", "extras", "documentary"),
+    ("dubbed", "extras", "dubbed"),
+    ("edition", "extras", "edition"),
+    ("hardcoded", "extras", "hardcoded"),
+    ("network", "extras", "network"),
+    ("proper", "extras", "proper"),
+    ("repack", "extras", "repack"),
+    ("retail", "extras", "retail"),
+    ("subbed", "extras", "subbed"),
+    ("upscaled", "extras", "upscaled"),
+    ("site", "extras", "site"),
+    ("scene", "extras", "scene"),
+    ("uncensored", "extras", "uncensored"),
+];
+
+fn ensure_non_empty_title(raw_title: &str) -> Result<(), RtnError> {
+    if raw_title.is_empty() {
+        return Err(RtnError::InvalidInput(
+            "The input title must be a non-empty string.".to_string(),
+        ));
+    }
+    Ok(())
+}
+
+fn value_is_active(value: Option<&Value>) -> bool {
+    match value {
+        Some(Value::Bool(v)) => *v,
+        Some(Value::String(s)) => !s.is_empty(),
+        Some(Value::Array(arr)) => !arr.is_empty(),
+        Some(Value::Number(_)) | Some(Value::Object(_)) => true,
+        Some(Value::Null) | None => false,
+    }
+}
+
+fn quality_mapping(quality: &str) -> Option<(&'static str, &'static str)> {
+    match quality {
+        "WEB" => Some(("quality", "web")),
+        "WEB-DL" => Some(("quality", "webdl")),
+        "BluRay" => Some(("quality", "bluray")),
+        "HDTV" => Some(("quality", "hdtv")),
+        "VHS" => Some(("quality", "vhs")),
+        "WEBMux" => Some(("quality", "webmux")),
+        "BluRay REMUX" | "REMUX" => Some(("quality", "remux")),
+        "WEBRip" => Some(("rips", "webrip")),
+        "WEB-DLRip" => Some(("rips", "webdlrip")),
+        "UHDRip" => Some(("rips", "uhdrip")),
+        "HDRip" => Some(("rips", "hdrip")),
+        "DVDRip" => Some(("rips", "dvdrip")),
+        "BDRip" => Some(("rips", "bdrip")),
+        "BRRip" => Some(("rips", "brrip")),
+        "VHSRip" => Some(("rips", "vhsrip")),
+        "PPVRip" => Some(("rips", "ppvrip")),
+        "SATRip" => Some(("rips", "satrip")),
+        "TeleCine" => Some(("trash", "telecine")),
+        "TeleSync" => Some(("trash", "telesync")),
+        "SCR" => Some(("trash", "screener")),
+        "R5" => Some(("trash", "r5")),
+        "CAM" => Some(("trash", "cam")),
+        "PDTV" => Some(("trash", "pdtv")),
+        _ => None,
+    }
+}
+
+fn codec_key(codec: &str) -> Option<&'static str> {
+    match codec {
+        "avc" => Some("avc"),
+        "hevc" => Some("hevc"),
+        "xvid" => Some("xvid"),
+        "av1" => Some("av1"),
+        "mpeg" => Some("mpeg"),
+        _ => None,
+    }
+}
+
+fn hdr_key(hdr: &str) -> Option<&'static str> {
+    match hdr {
+        "DV" => Some("dolby_vision"),
+        "HDR" => Some("hdr"),
+        "HDR10+" => Some("hdr10plus"),
+        "SDR" => Some("sdr"),
+        _ => None,
+    }
+}
+
+fn audio_mapping(audio: &str) -> Option<(&'static str, &'static str)> {
+    match audio {
+        "AAC" => Some(("audio", "aac")),
+        "Atmos" => Some(("audio", "atmos")),
+        "Dolby Digital" => Some(("audio", "dolby_digital")),
+        "Dolby Digital Plus" => Some(("audio", "dolby_digital_plus")),
+        "DTS Lossy" => Some(("audio", "dts_lossy")),
+        "DTS Lossless" => Some(("audio", "dts_lossless")),
+        "FLAC" => Some(("audio", "flac")),
+        "MP3" => Some(("audio", "mp3")),
+        "TrueHD" => Some(("audio", "truehd")),
+        "HQ Clean Audio" => Some(("trash", "clean_audio")),
+        _ => None,
+    }
+}
+
+fn extend_lang_group(target: &mut HashSet<String>, group_name: &str, values: &[&str]) {
+    if target.contains(group_name) {
+        target.extend(values.iter().map(|v| (*v).to_string()));
+    }
 }
 
 fn translate_char(ch: char) -> Option<&'static str> {
@@ -144,11 +283,7 @@ pub fn check_pattern(patterns: &[Value], raw_title: &str) -> Result<bool, RtnErr
 }
 
 pub fn parse(raw_title: &str, translate_langs: bool) -> Result<Map<String, Value>, RtnError> {
-    if raw_title.is_empty() {
-        return Err(RtnError::InvalidInput(
-            "The input title must be a non-empty string.".to_string(),
-        ));
-    }
+    ensure_non_empty_title(raw_title)?;
 
     let mut data = parse_title(raw_title, translate_langs)?;
 
@@ -176,21 +311,13 @@ pub fn parse(raw_title: &str, translate_langs: bool) -> Result<Map<String, Value
 }
 
 pub fn extract_seasons(raw_title: &str) -> Result<Vec<i64>, RtnError> {
-    if raw_title.is_empty() {
-        return Err(RtnError::InvalidInput(
-            "The input title must be a non-empty string.".to_string(),
-        ));
-    }
+    ensure_non_empty_title(raw_title)?;
     let data = parse_title(raw_title, false)?;
     Ok(map_i64s(&data, "seasons"))
 }
 
 pub fn extract_episodes(raw_title: &str) -> Result<Vec<i64>, RtnError> {
-    if raw_title.is_empty() {
-        return Err(RtnError::InvalidInput(
-            "The input title must be a non-empty string.".to_string(),
-        ));
-    }
+    ensure_non_empty_title(raw_title)?;
     let data = parse_title(raw_title, false)?;
     Ok(map_i64s(&data, "episodes"))
 }
@@ -201,11 +328,7 @@ pub fn episodes_from_season(raw_title: &str, season_num: i64) -> Result<Vec<i64>
             "The season number must be a positive integer.".to_string(),
         ));
     }
-    if raw_title.is_empty() {
-        return Err(RtnError::InvalidInput(
-            "The input title must be a non-empty string.".to_string(),
-        ));
-    }
+    ensure_non_empty_title(raw_title)?;
 
     let data = parse_title(raw_title, false)?;
     let seasons = map_i64s(&data, "seasons");
@@ -333,49 +456,44 @@ fn custom_rank_i64(settings: &Value, category: &str, key: &str, field: &str, def
 }
 
 pub fn populate_lang_sets(settings: &Value) -> (HashSet<String>, HashSet<String>, HashSet<String>) {
-    let anime: HashSet<String> = ["ja", "zh", "ko"]
-        .iter()
-        .map(|v| (*v).to_string())
-        .collect();
-    let non_anime: HashSet<String> = [
-        "de", "es", "hi", "ta", "ru", "ua", "th", "it", "ar", "pt", "fr", "pa", "mr", "gu", "te",
-        "kn", "ml", "vi", "id", "tr", "he", "fa", "el", "lt", "lv", "et", "pl", "cs", "sk", "hu",
-        "ro", "bg", "sr", "hr", "sl", "nl", "da", "fi", "sv", "no", "ms",
-    ]
-    .iter()
-    .map(|v| (*v).to_string())
-    .collect();
-    let common: HashSet<String> = [
-        "de", "es", "hi", "ta", "ru", "ua", "th", "it", "zh", "ar", "fr",
-    ]
-    .iter()
-    .map(|v| (*v).to_string())
-    .collect();
-    let all: HashSet<String> = anime.union(&non_anime).cloned().collect();
-
     let mut exclude = settings_languages(settings, "exclude");
     let mut required = settings_languages(settings, "required");
     let mut allowed = settings_languages(settings, "allowed");
 
-    let groups: HashMap<&str, &HashSet<String>> = [
-        ("anime", &anime),
-        ("non_anime", &non_anime),
-        ("common", &common),
-        ("all", &all),
-    ]
-    .into_iter()
-    .collect();
+    extend_lang_group(&mut exclude, "anime", ANIME_LANGS);
+    extend_lang_group(&mut exclude, "non_anime", NON_ANIME_LANGS);
+    extend_lang_group(&mut exclude, "common", COMMON_LANGS);
+    if exclude.contains("all") {
+        exclude.extend(
+            ANIME_LANGS
+                .iter()
+                .chain(NON_ANIME_LANGS.iter())
+                .map(|v| (*v).to_string()),
+        );
+    }
 
-    for (name, set) in groups {
-        if exclude.contains(name) {
-            exclude.extend(set.iter().cloned());
-        }
-        if required.contains(name) {
-            required.extend(set.iter().cloned());
-        }
-        if allowed.contains(name) {
-            allowed.extend(set.iter().cloned());
-        }
+    extend_lang_group(&mut required, "anime", ANIME_LANGS);
+    extend_lang_group(&mut required, "non_anime", NON_ANIME_LANGS);
+    extend_lang_group(&mut required, "common", COMMON_LANGS);
+    if required.contains("all") {
+        required.extend(
+            ANIME_LANGS
+                .iter()
+                .chain(NON_ANIME_LANGS.iter())
+                .map(|v| (*v).to_string()),
+        );
+    }
+
+    extend_lang_group(&mut allowed, "anime", ANIME_LANGS);
+    extend_lang_group(&mut allowed, "non_anime", NON_ANIME_LANGS);
+    extend_lang_group(&mut allowed, "common", COMMON_LANGS);
+    if allowed.contains("all") {
+        allowed.extend(
+            ANIME_LANGS
+                .iter()
+                .chain(NON_ANIME_LANGS.iter())
+                .map(|v| (*v).to_string()),
+        );
     }
 
     (exclude, required, allowed)
@@ -546,34 +664,7 @@ pub fn fetch_quality(
         return false;
     };
 
-    let mapped = match quality {
-        "WEB" => Some(("quality", "web")),
-        "WEB-DL" => Some(("quality", "webdl")),
-        "BluRay" => Some(("quality", "bluray")),
-        "HDTV" => Some(("quality", "hdtv")),
-        "VHS" => Some(("quality", "vhs")),
-        "WEBMux" => Some(("quality", "webmux")),
-        "BluRay REMUX" | "REMUX" => Some(("quality", "remux")),
-        "WEBRip" => Some(("rips", "webrip")),
-        "WEB-DLRip" => Some(("rips", "webdlrip")),
-        "UHDRip" => Some(("rips", "uhdrip")),
-        "HDRip" => Some(("rips", "hdrip")),
-        "DVDRip" => Some(("rips", "dvdrip")),
-        "BDRip" => Some(("rips", "bdrip")),
-        "BRRip" => Some(("rips", "brrip")),
-        "VHSRip" => Some(("rips", "vhsrip")),
-        "PPVRip" => Some(("rips", "ppvrip")),
-        "SATRip" => Some(("rips", "satrip")),
-        "TeleCine" => Some(("trash", "telecine")),
-        "TeleSync" => Some(("trash", "telesync")),
-        "SCR" => Some(("trash", "screener")),
-        "R5" => Some(("trash", "r5")),
-        "CAM" => Some(("trash", "cam")),
-        "PDTV" => Some(("trash", "pdtv")),
-        _ => None,
-    };
-
-    if let Some((category, key)) = mapped
+    if let Some((category, key)) = quality_mapping(quality)
         && !custom_rank_bool(settings, category, key, "fetch", true)
     {
         failed_keys.insert(format!("{category}_{key}"));
@@ -592,9 +683,7 @@ pub fn fetch_codec(
         return false;
     };
     let key = codec.to_lowercase();
-    if ["avc", "hevc", "av1", "xvid", "mpeg"].contains(&key.as_str())
-        && !custom_rank_bool(settings, "quality", &key, "fetch", true)
-    {
+    if codec_key(&key).is_some() && !custom_rank_bool(settings, "quality", &key, "fetch", true) {
         failed_keys.insert(format!("codec_{key}"));
         return true;
     }
@@ -606,32 +695,12 @@ pub fn fetch_audio(
     settings: &Value,
     failed_keys: &mut BTreeSet<String>,
 ) -> bool {
-    let map: HashMap<&str, &str> = [
-        ("AAC", "aac"),
-        ("Atmos", "atmos"),
-        ("Dolby Digital", "dolby_digital"),
-        ("Dolby Digital Plus", "dolby_digital_plus"),
-        ("DTS Lossy", "dts_lossy"),
-        ("DTS Lossless", "dts_lossless"),
-        ("FLAC", "flac"),
-        ("MP3", "mp3"),
-        ("TrueHD", "truehd"),
-        ("HQ Clean Audio", "clean_audio"),
-    ]
-    .into_iter()
-    .collect();
-
     for audio in map_strings(data, "audio") {
-        let Some(key) = map.get(audio.as_str()) else {
+        let Some((category, key)) = audio_mapping(audio.as_str()) else {
             continue;
         };
-        let (category, effective) = if audio == "HQ Clean Audio" {
-            ("trash", *key)
-        } else {
-            ("audio", *key)
-        };
-        if !custom_rank_bool(settings, category, effective, "fetch", true) {
-            failed_keys.insert(format!("{category}_{effective}"));
+        if !custom_rank_bool(settings, category, key, "fetch", true) {
+            failed_keys.insert(format!("{category}_{key}"));
             return true;
         }
     }
@@ -643,17 +712,8 @@ pub fn fetch_hdr(
     settings: &Value,
     failed_keys: &mut BTreeSet<String>,
 ) -> bool {
-    let map: HashMap<&str, &str> = [
-        ("DV", "dolby_vision"),
-        ("HDR", "hdr"),
-        ("HDR10+", "hdr10plus"),
-        ("SDR", "sdr"),
-    ]
-    .into_iter()
-    .collect();
-
     for hdr in map_strings(data, "hdr") {
-        if let Some(key) = map.get(hdr.as_str())
+        if let Some(key) = hdr_key(hdr.as_str())
             && !custom_rank_bool(settings, "hdr", key, "fetch", true)
         {
             failed_keys.insert(format!("hdr_{key}"));
@@ -669,36 +729,10 @@ pub fn fetch_other(
     settings: &Value,
     failed_keys: &mut BTreeSet<String>,
 ) -> bool {
-    let map: [(&str, &str, &str); 17] = [
-        ("_3d", "extras", "three_d"),
-        ("converted", "extras", "converted"),
-        ("documentary", "extras", "documentary"),
-        ("dubbed", "extras", "dubbed"),
-        ("edition", "extras", "edition"),
-        ("hardcoded", "extras", "hardcoded"),
-        ("network", "extras", "network"),
-        ("proper", "extras", "proper"),
-        ("repack", "extras", "repack"),
-        ("retail", "extras", "retail"),
-        ("subbed", "extras", "subbed"),
-        ("upscaled", "extras", "upscaled"),
-        ("site", "extras", "site"),
-        ("size", "trash", "size"),
-        ("bit_depth", "hdr", "10bit"),
-        ("scene", "extras", "scene"),
-        ("uncensored", "extras", "uncensored"),
-    ];
-
-    for (attr, category, key) in map {
-        let active = match data.get(attr) {
-            Some(Value::Bool(v)) => *v,
-            Some(Value::String(s)) => !s.is_empty(),
-            Some(Value::Array(arr)) => !arr.is_empty(),
-            Some(Value::Number(_)) => true,
-            Some(Value::Null) | None => false,
-            Some(Value::Object(_)) => true,
-        };
-        if active && !custom_rank_bool(settings, category, key, "fetch", true) {
+    for (attr, category, key) in EXTRA_FETCH_RULES {
+        if value_is_active(data.get(attr))
+            && !custom_rank_bool(settings, category, key, "fetch", true)
+        {
             failed_keys.insert(format!("{category}_{key}"));
             return true;
         }
@@ -831,34 +865,12 @@ pub fn calculate_quality_rank(
         return 0;
     };
 
-    match quality {
-        "WEB" => rank_or_custom(rank_model, settings, "quality", "web", "web"),
-        "WEB-DL" => rank_or_custom(rank_model, settings, "quality", "webdl", "webdl"),
-        "BluRay" => rank_or_custom(rank_model, settings, "quality", "bluray", "bluray"),
-        "HDTV" => rank_or_custom(rank_model, settings, "quality", "hdtv", "hdtv"),
-        "VHS" => rank_or_custom(rank_model, settings, "quality", "vhs", "vhs"),
-        "WEBMux" => rank_or_custom(rank_model, settings, "quality", "webmux", "webmux"),
-        "BluRay REMUX" | "REMUX" => {
-            rank_or_custom(rank_model, settings, "quality", "remux", "remux")
-        }
-        "WEBRip" => rank_or_custom(rank_model, settings, "rips", "webrip", "webrip"),
-        "WEB-DLRip" => rank_or_custom(rank_model, settings, "rips", "webdlrip", "webdlrip"),
-        "UHDRip" => rank_or_custom(rank_model, settings, "rips", "uhdrip", "uhdrip"),
-        "HDRip" => rank_or_custom(rank_model, settings, "rips", "hdrip", "hdrip"),
-        "DVDRip" => rank_or_custom(rank_model, settings, "rips", "dvdrip", "dvdrip"),
-        "BDRip" => rank_or_custom(rank_model, settings, "rips", "bdrip", "bdrip"),
-        "BRRip" => rank_or_custom(rank_model, settings, "rips", "brrip", "brrip"),
-        "VHSRip" => rank_or_custom(rank_model, settings, "rips", "vhsrip", "vhsrip"),
-        "PPVRip" => rank_or_custom(rank_model, settings, "rips", "ppvrip", "ppvrip"),
-        "SATRip" => rank_or_custom(rank_model, settings, "rips", "satrip", "satrip"),
-        "TVRip" => rank_or_custom(rank_model, settings, "rips", "tvrip", "tvrip"),
-        "TeleCine" => rank_or_custom(rank_model, settings, "trash", "telecine", "telecine"),
-        "TeleSync" => rank_or_custom(rank_model, settings, "trash", "telesync", "telesync"),
-        "SCR" => rank_or_custom(rank_model, settings, "trash", "screener", "screener"),
-        "R5" => rank_or_custom(rank_model, settings, "trash", "r5", "r5"),
-        "CAM" => rank_or_custom(rank_model, settings, "trash", "cam", "cam"),
-        "PDTV" => rank_or_custom(rank_model, settings, "trash", "pdtv", "pdtv"),
-        _ => 0,
+    if let Some((category, key)) = quality_mapping(quality) {
+        rank_or_custom(rank_model, settings, category, key, key)
+    } else if quality == "TVRip" {
+        rank_or_custom(rank_model, settings, "rips", "tvrip", "tvrip")
+    } else {
+        0
     }
 }
 
@@ -870,13 +882,11 @@ pub fn calculate_codec_rank(
     let Some(codec) = map_str(data, "codec") else {
         return 0;
     };
-    match codec.to_lowercase().as_str() {
-        "avc" => rank_or_custom(rank_model, settings, "quality", "avc", "avc"),
-        "hevc" => rank_or_custom(rank_model, settings, "quality", "hevc", "hevc"),
-        "xvid" => rank_or_custom(rank_model, settings, "quality", "xvid", "xvid"),
-        "av1" => rank_or_custom(rank_model, settings, "quality", "av1", "av1"),
-        "mpeg" => rank_or_custom(rank_model, settings, "quality", "mpeg", "mpeg"),
-        _ => 0,
+    let lower = codec.to_lowercase();
+    if let Some(key) = codec_key(&lower) {
+        rank_or_custom(rank_model, settings, "quality", key, key)
+    } else {
+        0
     }
 }
 
@@ -884,13 +894,9 @@ pub fn calculate_hdr_rank(data: &Map<String, Value>, settings: &Value, rank_mode
     let mut total = 0;
 
     for hdr in map_strings(data, "hdr") {
-        total += match hdr.as_str() {
-            "DV" => rank_or_custom(rank_model, settings, "hdr", "dolby_vision", "dolby_vision"),
-            "HDR" => rank_or_custom(rank_model, settings, "hdr", "hdr", "hdr"),
-            "HDR10+" => rank_or_custom(rank_model, settings, "hdr", "hdr10plus", "hdr10plus"),
-            "SDR" => rank_or_custom(rank_model, settings, "hdr", "sdr", "sdr"),
-            _ => 0,
-        };
+        if let Some(key) = hdr_key(hdr.as_str()) {
+            total += rank_or_custom(rank_model, settings, "hdr", key, key);
+        }
     }
 
     if data.get("bit_depth").and_then(Value::as_str).is_some() {
@@ -907,39 +913,9 @@ pub fn calculate_audio_rank(
 ) -> i64 {
     let mut total = 0;
     for audio in map_strings(data, "audio") {
-        total += match audio.as_str() {
-            "AAC" => rank_or_custom(rank_model, settings, "audio", "aac", "aac"),
-            "Atmos" => rank_or_custom(rank_model, settings, "audio", "atmos", "atmos"),
-            "Dolby Digital" => rank_or_custom(
-                rank_model,
-                settings,
-                "audio",
-                "dolby_digital",
-                "dolby_digital",
-            ),
-            "Dolby Digital Plus" => rank_or_custom(
-                rank_model,
-                settings,
-                "audio",
-                "dolby_digital_plus",
-                "dolby_digital_plus",
-            ),
-            "DTS Lossy" => rank_or_custom(rank_model, settings, "audio", "dts_lossy", "dts_lossy"),
-            "DTS Lossless" => rank_or_custom(
-                rank_model,
-                settings,
-                "audio",
-                "dts_lossless",
-                "dts_lossless",
-            ),
-            "FLAC" => rank_or_custom(rank_model, settings, "audio", "flac", "flac"),
-            "MP3" => rank_or_custom(rank_model, settings, "audio", "mp3", "mp3"),
-            "TrueHD" => rank_or_custom(rank_model, settings, "audio", "truehd", "truehd"),
-            "HQ Clean Audio" => {
-                rank_or_custom(rank_model, settings, "trash", "clean_audio", "clean_audio")
-            }
-            _ => 0,
-        };
+        if let Some((category, key)) = audio_mapping(audio.as_str()) {
+            total += rank_or_custom(rank_model, settings, category, key, key);
+        }
     }
     total
 }
@@ -975,34 +951,9 @@ pub fn calculate_extra_ranks(
     }
 
     let mut total = 0;
-    let checks: [(&str, &str, &str, &str); 15] = [
-        ("_3d", "extras", "three_d", "three_d"),
-        ("converted", "extras", "converted", "converted"),
-        ("documentary", "extras", "documentary", "documentary"),
-        ("dubbed", "extras", "dubbed", "dubbed"),
-        ("edition", "extras", "edition", "edition"),
-        ("hardcoded", "extras", "hardcoded", "hardcoded"),
-        ("network", "extras", "network", "network"),
-        ("proper", "extras", "proper", "proper"),
-        ("repack", "extras", "repack", "repack"),
-        ("retail", "extras", "retail", "retail"),
-        ("subbed", "extras", "subbed", "subbed"),
-        ("upscaled", "extras", "upscaled", "upscaled"),
-        ("site", "extras", "site", "site"),
-        ("scene", "extras", "scene", "scene"),
-        ("uncensored", "extras", "uncensored", "uncensored"),
-    ];
-
-    for (attr, category, key, field) in checks {
-        let active = match data.get(attr) {
-            Some(Value::Bool(v)) => *v,
-            Some(Value::String(s)) => !s.is_empty(),
-            Some(Value::Array(arr)) => !arr.is_empty(),
-            Some(Value::Null) | None => false,
-            Some(_) => true,
-        };
-        if active {
-            total += rank_or_custom(rank_model, settings, category, key, field);
+    for (attr, category, key) in EXTRA_RANK_RULES {
+        if value_is_active(data.get(attr)) {
+            total += rank_or_custom(rank_model, settings, category, key, key);
         }
     }
 

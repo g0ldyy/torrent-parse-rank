@@ -48,16 +48,16 @@ class ParsedData(BaseModel):
     adult: bool = False
     year: int | None = None
     resolution: str = "unknown"
-    seasons: list[int] = []
-    episodes: list[int] = []
+    seasons: list[int] = Field(default_factory=list)
+    episodes: list[int] = Field(default_factory=list)
     complete: bool = False
-    volumes: list[int] = []
-    languages: list[str] = []
+    volumes: list[int] = Field(default_factory=list)
+    languages: list[str] = Field(default_factory=list)
     quality: str | None = None
-    hdr: list[str] = []
+    hdr: list[str] = Field(default_factory=list)
     codec: str | None = None
-    audio: list[str] = []
-    channels: list[str] = []
+    audio: list[str] = Field(default_factory=list)
+    channels: list[str] = Field(default_factory=list)
     dubbed: bool = False
     subbed: bool = False
     date: str | None = None
@@ -87,13 +87,11 @@ class ParsedData(BaseModel):
     country: str | None = None
     container: str | None = None
     extension: str | None = None
-    extras: list[str] = []
+    extras: list[str] = Field(default_factory=list)
     torrent: bool = False
     scene: bool = False
 
-    class Config:
-        from_attributes = True
-        use_orm = True
+    model_config = ConfigDict(from_attributes=True)
 
     @property
     def type(self) -> str:
@@ -155,16 +153,13 @@ class Torrent(BaseModel):
     torrent: str | None = None
     seeders: int | None = 0
     leechers: int | None = 0
-    trackers: list[str] | None = []
+    trackers: list[str] | None = Field(default_factory=list)
     data: ParsedData
     fetch: bool = False
     rank: int = 0
     lev_ratio: float = 0.0
 
-    class Config:
-        from_attributes = True
-        use_orm = True
-        frozen = True
+    model_config = ConfigDict(from_attributes=True, frozen=True)
 
     @field_validator("infohash")
     def validate_infohash(cls, v):
@@ -408,10 +403,10 @@ class LanguagesConfig(ConfigModelBase):
         preferred: Languages that are preferred (used for ranking).
     """
 
-    required: list[str] = Field(default=[])
-    allowed: list[str] = Field(default=[])
-    exclude: list[str] = Field(default=[])
-    preferred: list[str] = Field(default=[])
+    required: list[str] = Field(default_factory=list)
+    allowed: list[str] = Field(default_factory=list)
+    exclude: list[str] = Field(default_factory=list)
+    preferred: list[str] = Field(default_factory=list)
 
 
 class CustomRank(BaseModel):
@@ -592,13 +587,16 @@ class SettingsModel(BaseModel):
     name: str = Field(default="example", description="Name of the settings")
     enabled: bool = Field(default=True, description="Whether these settings will be used or not")
     require: list[PatternType] = Field(
-        default=[], description="Patterns torrents must match to be considered"
+        default_factory=list,
+        description="Patterns torrents must match to be considered",
     )
     exclude: list[PatternType] = Field(
-        default=[], description="Patterns that, if matched, result in torrent exclusion"
+        default_factory=list,
+        description="Patterns that, if matched, result in torrent exclusion",
     )
     preferred: list[PatternType] = Field(
-        default=[], description="Patterns indicating preferred attributes in torrents"
+        default_factory=list,
+        description="Patterns indicating preferred attributes in torrents",
     )
     resolutions: ResolutionConfig = Field(
         default_factory=ResolutionConfig,
@@ -657,9 +655,6 @@ class SettingsModel(BaseModel):
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
         from_attributes=True,
-        json_encoders={
-            Pattern: lambda v: f"/{v.pattern}/" if not v.flags & regex.IGNORECASE else v.pattern
-        },
     )
 
     def save(self, path: str | Path) -> None:

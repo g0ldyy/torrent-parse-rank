@@ -36,12 +36,14 @@ class MediaMetadata(BaseModel):
 
     filename: str = Field(default="", description="Name of the media file")
     file_size: int = Field(default=0, description="Size of the media file in bytes")
-    video: VideoTrack = Field(default=VideoTrack(), description="Video track metadata")
+    video: VideoTrack = Field(default_factory=VideoTrack, description="Video track metadata")
     duration: float = Field(default=0.0, description="Duration of the video in seconds")
-    format: list[str] = Field(default=[], description="Format of the video")
+    format: list[str] = Field(default_factory=list, description="Format of the video")
     bitrate: int = Field(default=0, description="Bitrate of the video in bits per second")
-    audio: list[AudioTrack] = Field(default=[], description="Audio tracks in the video")
-    subtitles: list[SubtitleTrack] = Field(default=[], description="Subtitles in the video")
+    audio: list[AudioTrack] = Field(default_factory=list, description="Audio tracks in the video")
+    subtitles: list[SubtitleTrack] = Field(
+        default_factory=list, description="Subtitles in the video"
+    )
 
     @property
     def size_in_mb(self) -> float:
