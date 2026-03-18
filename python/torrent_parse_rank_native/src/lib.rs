@@ -50,7 +50,11 @@ fn value_to_py(py: Python<'_>, value: &Value) -> PyResult<Py<PyAny>> {
 }
 
 fn map_to_py(py: Python<'_>, map: &Map<String, Value>) -> PyResult<Py<PyAny>> {
-    value_to_py(py, &Value::Object(map.clone()))
+    let dict = PyDict::new(py);
+    for (k, v) in map {
+        dict.set_item(k, value_to_py(py, v)?)?;
+    }
+    Ok(dict.into_any().unbind())
 }
 
 fn parse_data_and_settings(
@@ -128,7 +132,7 @@ fn ptt_parse_title(
     translate_languages: bool,
 ) -> PyResult<Py<PyAny>> {
     let parsed = parse_title(raw_title, translate_languages).map_err(to_py_value_error)?;
-    value_to_py(py, &Value::Object(parsed))
+    map_to_py(py, &parsed)
 }
 
 #[pyfunction]
@@ -142,7 +146,7 @@ fn ptt_parse_many(
     let parsed = parse_many(refs, translate_languages).map_err(to_py_value_error)?;
     let list = PyList::empty(py);
     for item in parsed {
-        list.append(value_to_py(py, &Value::Object(item))?)?;
+        list.append(map_to_py(py, &item)?)?;
     }
     Ok(list.into_any().unbind())
 }

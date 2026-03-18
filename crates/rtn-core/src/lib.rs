@@ -41,6 +41,25 @@ fn map_i64s(map: &Map<String, Value>, key: &str) -> Vec<i64> {
         .unwrap_or_default()
 }
 
+fn settings_value_array<'a>(settings: &'a Value, key: &str) -> &'a [Value] {
+    settings
+        .get(key)
+        .and_then(Value::as_array)
+        .map(Vec::as_slice)
+        .unwrap_or(&[])
+}
+
+fn pattern_text(pattern: &Value) -> &str {
+    match pattern {
+        Value::String(s) => s.as_str(),
+        Value::Object(obj) => obj
+            .get("pattern")
+            .and_then(Value::as_str)
+            .unwrap_or_default(),
+        _ => "",
+    }
+}
+
 const ANIME_LANGS: &[&str] = &["ja", "zh", "ko"];
 const NON_ANIME_LANGS: &[&str] = &[
     "de", "es", "hi", "ta", "ru", "ua", "th", "it", "ar", "pt", "fr", "pa", "mr", "gu", "te", "kn",
@@ -71,6 +90,7 @@ const EXTRA_RULES: [(&str, &str, &str); 15] = [
 
 const EXTRA_FETCH_ONLY_RULES: [(&str, &str, &str); 2] =
     [("size", "trash", "size"), ("bit_depth", "hdr", "10bit")];
+const TRASH_QUALITIES: &[&str] = &["CAM", "PDTV", "R5", "SCR", "TeleCine", "TeleSync"];
 
 fn ensure_non_empty_title(raw_title: &str) -> Result<(), RtnError> {
     if raw_title.is_empty() {
@@ -121,13 +141,18 @@ fn quality_mapping(quality: &str) -> Option<(&'static str, &'static str)> {
 }
 
 fn codec_key(codec: &str) -> Option<&'static str> {
-    match codec {
-        "avc" => Some("avc"),
-        "hevc" => Some("hevc"),
-        "xvid" => Some("xvid"),
-        "av1" => Some("av1"),
-        "mpeg" => Some("mpeg"),
-        _ => None,
+    if codec.eq_ignore_ascii_case("avc") {
+        Some("avc")
+    } else if codec.eq_ignore_ascii_case("hevc") {
+        Some("hevc")
+    } else if codec.eq_ignore_ascii_case("xvid") {
+        Some("xvid")
+    } else if codec.eq_ignore_ascii_case("av1") {
+        Some("av1")
+    } else if codec.eq_ignore_ascii_case("mpeg") {
+        Some("mpeg")
+    } else {
+        None
     }
 }
 
@@ -339,19 +364,19 @@ pub fn get_lev_ratio(
     let parsed_norm = normalize_title(parsed_title, true);
     let mut best = 0.0_f64;
 
-    let mut titles = vec![normalize_title(correct_title, true)];
-    for alias_values in aliases.values() {
-        if let Some(alias_list) = alias_values.as_array() {
-            for alias in alias_list.iter().filter_map(Value::as_str) {
-                titles.push(normalize_title(alias, true));
-            }
-        }
-    }
-
-    for title in titles {
-        let score = normalized_levenshtein(&title, &parsed_norm);
+    let correct_norm = normalize_title(correct_title, true);
+    let mut update_best = |candidate: &str| {
+        let score = normalized_levenshtein(candidate, &parsed_norm);
         if score >= threshold && score > best {
             best = score;
+        }
+    };
+
+    update_best(&correct_norm);
+    for alias_values in aliases.values().filter_map(Value::as_array) {
+        for alias in alias_values.iter().filter_map(Value::as_str) {
+            let alias_norm = normalize_title(alias, true);
+            update_best(&alias_norm);
         }
     }
 
@@ -469,7 +494,7 @@ pub fn trash_handler(
 ) -> bool {
     if settings_option_bool(settings, "remove_all_trash", true) {
         if let Some(quality) = map_str(data, "quality")
-            && ["CAM", "PDTV", "R5", "SCR", "TeleCine", "TeleSync"].contains(&quality)
+            && TRASH_QUALITIES.contains(&quality)
         {
             failed_keys.insert("trash_quality".to_string());
             return true;
@@ -504,15 +529,11 @@ pub fn adult_handler(
 
 pub fn check_required(data: &Map<String, Value>, settings: &Value) -> Result<bool, RtnError> {
     let raw_title = map_str(data, "raw_title").unwrap_or_default();
-    let required = settings
-        .get("require")
-        .and_then(Value::as_array)
-        .cloned()
-        .unwrap_or_default();
+    let required = settings_value_array(settings, "require");
     if required.is_empty() {
         return Ok(false);
     }
-    check_pattern(&required, raw_title)
+    check_pattern(required, raw_title)
 }
 
 pub fn check_exclude(
@@ -521,25 +542,11 @@ pub fn check_exclude(
     failed_keys: &mut BTreeSet<String>,
 ) -> Result<bool, RtnError> {
     let raw_title = map_str(data, "raw_title").unwrap_or_default();
-    let exclude = settings
-        .get("exclude")
-        .and_then(Value::as_array)
-        .cloned()
-        .unwrap_or_default();
-
-    for pattern in exclude {
-        if let Some(re) = compile_pattern(&pattern)?
+    for pattern in settings_value_array(settings, "exclude") {
+        if let Some(re) = compile_pattern(pattern)?
             && re.is_match(raw_title)?
         {
-            let pat = match pattern {
-                Value::String(s) => s,
-                Value::Object(obj) => obj
-                    .get("pattern")
-                    .and_then(Value::as_str)
-                    .unwrap_or_default()
-                    .to_string(),
-                _ => String::new(),
-            };
+            let pat = pattern_text(pattern);
             failed_keys.insert(format!("exclude_regex '{pat}'"));
             return Ok(true);
         }
@@ -659,8 +666,10 @@ pub fn fetch_codec(
     let Some(codec) = map_str(data, "codec") else {
         return false;
     };
-    let key = codec.to_lowercase();
-    if codec_key(&key).is_some() && !custom_rank_bool(settings, "quality", &key, "fetch", true) {
+    let Some(key) = codec_key(codec) else {
+        return false;
+    };
+    if !custom_rank_bool(settings, "quality", key, "fetch", true) {
         failed_keys.insert(format!("codec_{key}"));
         return true;
     }
@@ -805,16 +814,12 @@ fn rank_or_custom(
 }
 
 pub fn calculate_preferred(data: &Map<String, Value>, settings: &Value) -> Result<i64, RtnError> {
-    let patterns = settings
-        .get("preferred")
-        .and_then(Value::as_array)
-        .cloned()
-        .unwrap_or_default();
+    let patterns = settings_value_array(settings, "preferred");
     if patterns.is_empty() {
         return Ok(0);
     }
     let raw_title = map_str(data, "raw_title").unwrap_or_default();
-    Ok(if check_pattern(&patterns, raw_title)? {
+    Ok(if check_pattern(patterns, raw_title)? {
         10_000
     } else {
         0
@@ -863,8 +868,7 @@ pub fn calculate_codec_rank(
     let Some(codec) = map_str(data, "codec") else {
         return 0;
     };
-    let lower = codec.to_lowercase();
-    if let Some(key) = codec_key(&lower) {
+    if let Some(key) = codec_key(codec) {
         rank_or_custom(rank_model, settings, "quality", key, key)
     } else {
         0
@@ -969,7 +973,7 @@ pub fn get_rank(
 }
 
 pub fn parse_json_object(raw: &str, field_name: &str) -> Result<Map<String, Value>, RtnError> {
-    let value: Value = serde_json::from_str(raw)?;
+    let value = parse_json_value(raw, field_name)?;
     value
         .as_object()
         .cloned()

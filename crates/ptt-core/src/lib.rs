@@ -806,6 +806,16 @@ fn range_func(input: &str) -> Option<Vec<Value>> {
     None
 }
 
+fn site_tld_lang_code(tld: &str) -> Option<&'static str> {
+    match tld {
+        "nl" => Some("nl"),
+        "fi" => Some("fi"),
+        "se" => Some("sv"),
+        "tel" => Some("te"),
+        _ => None,
+    }
+}
+
 fn post_process_result(raw_title: &str, result: &mut Map<String, Value>) -> Result<(), ParseError> {
     if let Some(Value::String(q)) = result.get("quality")
         && q == "REMUX"
@@ -850,14 +860,7 @@ fn post_process_result(raw_title: &str, result: &mut Map<String, Value>) -> Resu
             .chars()
             .filter(|c| c.is_ascii_alphabetic())
             .collect();
-        let mapped = match tld.as_str() {
-            "nl" => Some("nl"),
-            "fi" => Some("fi"),
-            "se" => Some("sv"),
-            "tel" => Some("te"),
-            _ => None,
-        };
-        if let Some(code) = mapped {
+        if let Some(code) = site_tld_lang_code(&tld) {
             langs.retain(|l| l != code);
         }
     }
@@ -868,14 +871,8 @@ fn post_process_result(raw_title: &str, result: &mut Map<String, Value>) -> Resu
         .filter_map(Result::ok)
     {
         let Some(m) = cap.get(1) else { continue };
-        let mapped = match m.as_str().to_lowercase().as_str() {
-            "nl" => Some("nl"),
-            "fi" => Some("fi"),
-            "se" => Some("sv"),
-            "tel" => Some("te"),
-            _ => None,
-        };
-        if let Some(code) = mapped {
+        let tld = m.as_str().to_lowercase();
+        if let Some(code) = site_tld_lang_code(&tld) {
             langs.retain(|l| l != code);
         }
     }

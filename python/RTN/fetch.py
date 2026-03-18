@@ -85,9 +85,19 @@ def _run_bool_with_failed_keys(
     return bool(res)
 
 
+def _make_failed_key_handler(
+    name: str, native_fn: Callable[[str, str], tuple[bool, list[str]]]
+) -> Callable[[ParsedData, SettingsModel, set[str]], bool]:
+    def handler(data: ParsedData, settings: SettingsModel, failed_keys: set[str]) -> bool:
+        return _run_bool_with_failed_keys(native_fn, data, settings, failed_keys)
+
+    handler.__name__ = name
+    return handler
+
+
 def check_fetch(
     data: ParsedData, settings: SettingsModel, speed_mode: bool = True
-) -> tuple[bool, list]:
+) -> tuple[bool, list[str]]:
     if not isinstance(data, ParsedData):
         raise TypeError("Parsed data must be an instance of ParsedData.")
     if not isinstance(settings, SettingsModel):
@@ -104,16 +114,9 @@ def populate_langs(settings: SettingsModel) -> None:
     settings.languages.allowed = list(allowed)
 
 
-def trash_handler(data: ParsedData, settings: SettingsModel, failed_keys: set) -> bool:
-    return _run_bool_with_failed_keys(rtn_trash_handler, data, settings, failed_keys)
-
-
-def adult_handler(data: ParsedData, settings: SettingsModel, failed_keys: set) -> bool:
-    return _run_bool_with_failed_keys(rtn_adult_handler, data, settings, failed_keys)
-
-
-def language_handler(data: ParsedData, settings: SettingsModel, failed_keys: set) -> bool:
-    return _run_bool_with_failed_keys(rtn_language_handler, data, settings, failed_keys)
+trash_handler = _make_failed_key_handler("trash_handler", rtn_trash_handler)
+adult_handler = _make_failed_key_handler("adult_handler", rtn_adult_handler)
+language_handler = _make_failed_key_handler("language_handler", rtn_language_handler)
 
 
 def check_required(data: ParsedData, settings: SettingsModel) -> bool:
@@ -121,29 +124,10 @@ def check_required(data: ParsedData, settings: SettingsModel) -> bool:
     return rtn_check_required(data_json, settings_json)
 
 
-def check_exclude(data: ParsedData, settings: SettingsModel, failed_keys: set) -> bool:
-    return _run_bool_with_failed_keys(rtn_check_exclude, data, settings, failed_keys)
-
-
-def fetch_resolution(data: ParsedData, settings: SettingsModel, failed_keys: set) -> bool:
-    return _run_bool_with_failed_keys(rtn_fetch_resolution, data, settings, failed_keys)
-
-
-def fetch_audio(data: ParsedData, settings: SettingsModel, failed_keys: set) -> bool:
-    return _run_bool_with_failed_keys(rtn_fetch_audio, data, settings, failed_keys)
-
-
-def fetch_quality(data: ParsedData, settings: SettingsModel, failed_keys: set) -> bool:
-    return _run_bool_with_failed_keys(rtn_fetch_quality, data, settings, failed_keys)
-
-
-def fetch_codec(data: ParsedData, settings: SettingsModel, failed_keys: set) -> bool:
-    return _run_bool_with_failed_keys(rtn_fetch_codec, data, settings, failed_keys)
-
-
-def fetch_hdr(data: ParsedData, settings: SettingsModel, failed_keys: set) -> bool:
-    return _run_bool_with_failed_keys(rtn_fetch_hdr, data, settings, failed_keys)
-
-
-def fetch_other(data: ParsedData, settings: SettingsModel, failed_keys: set) -> bool:
-    return _run_bool_with_failed_keys(rtn_fetch_other, data, settings, failed_keys)
+check_exclude = _make_failed_key_handler("check_exclude", rtn_check_exclude)
+fetch_resolution = _make_failed_key_handler("fetch_resolution", rtn_fetch_resolution)
+fetch_audio = _make_failed_key_handler("fetch_audio", rtn_fetch_audio)
+fetch_quality = _make_failed_key_handler("fetch_quality", rtn_fetch_quality)
+fetch_codec = _make_failed_key_handler("fetch_codec", rtn_fetch_codec)
+fetch_hdr = _make_failed_key_handler("fetch_hdr", rtn_fetch_hdr)
+fetch_other = _make_failed_key_handler("fetch_other", rtn_fetch_other)

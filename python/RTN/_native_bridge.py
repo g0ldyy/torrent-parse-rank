@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from typing import Any
 
 import orjson
@@ -23,7 +24,7 @@ def _serialize_pattern_item(item: Any) -> dict[str, Any] | None:
     raise TypeError(f"Unsupported pattern item type: {type(item)}")
 
 
-def _serialize_pattern_list(items: list[Any]) -> list[dict[str, Any] | None]:
+def _serialize_pattern_list(items: Iterable[Any]) -> list[dict[str, Any] | None]:
     return [_serialize_pattern_item(item) for item in items]
 
 
@@ -34,7 +35,7 @@ def pattern_list_to_json(items: list[Any]) -> str:
 def settings_to_json(settings: Any) -> str:
     payload = settings.model_dump(mode="json", by_alias=True)
     for field in _PATTERN_FIELDS:
-        payload[field] = _serialize_pattern_list(list(getattr(settings, field, ())))
+        payload[field] = _serialize_pattern_list(getattr(settings, field, ()))
     return _dumps(payload)
 
 

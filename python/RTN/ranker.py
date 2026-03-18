@@ -40,6 +40,16 @@ def _call_rank_native(
     return int(native_fn(data_json, settings_json, rank_model_json))
 
 
+def _make_rank_component(
+    name: str, native_fn: Callable[[str, str, str], int]
+) -> Callable[[ParsedData, SettingsModel, BaseRankingModel], int]:
+    def component(data: ParsedData, settings: SettingsModel, rank_model: BaseRankingModel) -> int:
+        return _call_rank_native(native_fn, data, settings, rank_model)
+
+    component.__name__ = name
+    return component
+
+
 def get_rank(data: ParsedData, settings: SettingsModel, rank_model: BaseRankingModel) -> int:
     _assert_parsed_data(data)
     return _call_rank_native(rtn_get_rank, data, settings, rank_model)
@@ -53,37 +63,11 @@ def calculate_preferred_langs(data: ParsedData, settings: SettingsModel) -> int:
     return _call_rank_native(rtn_calculate_preferred_langs, data, settings)
 
 
-def calculate_quality_rank(
-    data: ParsedData, settings: SettingsModel, rank_model: BaseRankingModel
-) -> int:
-    return _call_rank_native(rtn_calculate_quality_rank, data, settings, rank_model)
-
-
-def calculate_codec_rank(
-    data: ParsedData, settings: SettingsModel, rank_model: BaseRankingModel
-) -> int:
-    return _call_rank_native(rtn_calculate_codec_rank, data, settings, rank_model)
-
-
-def calculate_hdr_rank(
-    data: ParsedData, settings: SettingsModel, rank_model: BaseRankingModel
-) -> int:
-    return _call_rank_native(rtn_calculate_hdr_rank, data, settings, rank_model)
-
-
-def calculate_audio_rank(
-    data: ParsedData, settings: SettingsModel, rank_model: BaseRankingModel
-) -> int:
-    return _call_rank_native(rtn_calculate_audio_rank, data, settings, rank_model)
-
-
-def calculate_channels_rank(
-    data: ParsedData, settings: SettingsModel, rank_model: BaseRankingModel
-) -> int:
-    return _call_rank_native(rtn_calculate_channels_rank, data, settings, rank_model)
-
-
-def calculate_extra_ranks(
-    data: ParsedData, settings: SettingsModel, rank_model: BaseRankingModel
-) -> int:
-    return _call_rank_native(rtn_calculate_extra_ranks, data, settings, rank_model)
+calculate_quality_rank = _make_rank_component("calculate_quality_rank", rtn_calculate_quality_rank)
+calculate_codec_rank = _make_rank_component("calculate_codec_rank", rtn_calculate_codec_rank)
+calculate_hdr_rank = _make_rank_component("calculate_hdr_rank", rtn_calculate_hdr_rank)
+calculate_audio_rank = _make_rank_component("calculate_audio_rank", rtn_calculate_audio_rank)
+calculate_channels_rank = _make_rank_component(
+    "calculate_channels_rank", rtn_calculate_channels_rank
+)
+calculate_extra_ranks = _make_rank_component("calculate_extra_ranks", rtn_calculate_extra_ranks)
