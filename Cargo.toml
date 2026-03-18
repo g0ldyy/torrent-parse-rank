@@ -1,0 +1,32 @@
+[workspace]
+members = [
+  "crates/ptt-core",
+  "crates/rtn-core",
+  "python/torrent_parse_rank_native",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "GPL-3.0-or-later"
+authors = ["Goldy"]
+description = "High-performance torrent title parsing and ranking for Python, powered by Rust."
+homepage = "https://github.com/g0ldyy/torrent-parse-rank"
+repository = "https://github.com/g0ldyy/torrent-parse-rank"
+
+[workspace.dependencies]
+anyhow = "1.0.102"
+chrono = { version = "0.4.44", features = ["clock"] }
+criterion = "0.8.2"
+fancy-regex = "0.17.0"
+indexmap = "2.13.0"
+once_cell = "1.21.4"
+parking_lot = "0.12.5"
+pcre2 = "0.2.11"
+pyo3 = { version = "0.28.2", features = ["extension-module", "abi3-py310"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+strsim = "0.11.1"
+thiserror = "2.0.18"
+unicode-normalization = "0.1.25"

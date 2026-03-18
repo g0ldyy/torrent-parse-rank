@@ -1,0 +1,27 @@
+[package]
+name = "ptt-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Core torrent title parsing engine used by torrent-parse-rank."
+homepage.workspace = true
+repository.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+chrono.workspace = true
+fancy-regex.workspace = true
+once_cell.workspace = true
+parking_lot.workspace = true
+pcre2.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+criterion.workspace = true
+
+[[bench]]
+name = "ptt_bench"
+harness = false

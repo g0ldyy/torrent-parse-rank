@@ -1,0 +1,5611 @@
+{
+  "handlers": [
+    {
+      "name": "year",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b19\\d{2}\\s?-\\s?20\\d{2}\\b",
+      "flags": 0,
+      "transform": "first_integer"
+    },
+    {
+      "name": "title",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "360.Degrees.of.Vision.The.Byakugan'?s.Blind.Spot",
+      "flags": 2,
+      "transform": "none"
+    },
+    {
+      "name": "title",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b100[ .-]*years?[ .-]*quest\\b",
+      "flags": 2,
+      "transform": "none"
+    },
+    {
+      "name": "title",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\[?(\\+.)?Extras\\]?",
+      "flags": 2,
+      "transform": "none"
+    },
+    {
+      "name": "title",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(\\+Movies)?\\+Specials",
+      "flags": 2,
+      "transform": "none"
+    },
+    {
+      "name": "group",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "-?EDGE2020",
+      "flags": 0,
+      "transform": "value('EDGE2020')"
+    },
+    {
+      "name": "title",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "TV Money",
+      "flags": 2,
+      "transform": "none"
+    },
+    {
+      "name": "container",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\.?[\\[(]?\\b(MKV|AVI|MP4|WMV|MPG|MPEG)\\b[\\])]?",
+      "flags": 2,
+      "transform": "lowercase"
+    },
+    {
+      "name": "torrent",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\.torrent$",
+      "flags": 0,
+      "transform": "boolean"
+    },
+    {
+      "name": "adult",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(XXX|xxx|Xxx)\\b",
+      "flags": 0,
+      "transform": "boolean"
+    },
+    {
+      "name": "adult",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "function",
+      "function": "is_adult_content",
+      "transform": "none"
+    },
+    {
+      "name": "scene",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "^(?=.*(\\b\\d{3,4}p\\b).*([_. ]WEB[_. ])(?!DL)\\b)|\\b(-CAKES|-GGEZ|-GGWP|-GLHF|-GOSSIP|-NAISU|-KOGI|-PECULATE|-SLOT|-EDITH|-ETHEL|-ELEANOR|-B2B|-SPAMnEGGS|-FTP|-DiRT|-SYNCOPY|-BAE|-SuccessfulCrab|-NHTFS|-SURCODE|-B0MBARDIERS)",
+      "flags": 0,
+      "transform": "boolean"
+    },
+    {
+      "name": "extras",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bNCED\\b",
+      "flags": 0,
+      "transform": "uniq_concat(value('NCED'))"
+    },
+    {
+      "name": "extras",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bNCOP\\b",
+      "flags": 0,
+      "transform": "uniq_concat(value('NCOP'))"
+    },
+    {
+      "name": "extras",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bNC\\b",
+      "flags": 0,
+      "transform": "uniq_concat(value('NC'))"
+    },
+    {
+      "name": "extras",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bOVA\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('OVA'))"
+    },
+    {
+      "name": "extras",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bED(\\d?v?\\d?)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('ED'))"
+    },
+    {
+      "name": "extras",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bOPv?(\\d+)?\\b",
+      "flags": 0,
+      "transform": "uniq_concat(value('OP'))"
+    },
+    {
+      "name": "extras",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bDeleted.*Scenes?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('Deleted Scene'))"
+    },
+    {
+      "name": "extras",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?:(?<=\\b(?:19\\d{2}|20\\d{2})\\b.*)\\b(?:Featurettes?)\\b|\\bFeaturettes?\\b(?!.*\\b(?:19\\d{2}|20\\d{2})\\b))",
+      "flags": 2,
+      "transform": "uniq_concat(value('Featurette'))"
+    },
+    {
+      "name": "extras",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?:(?<=\\b(?:19\\d{2}|20\\d{2})\\b.*)\\b(?:Sample)\\b|\\b(?:Sample)\\b(?!.*\\b(?:19\\d{2}|20\\d{2})\\b))",
+      "flags": 2,
+      "transform": "uniq_concat(value('Sample'))"
+    },
+    {
+      "name": "extras",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?:(?<=\\b(?:19\\d{2}|20\\d{2})\\b.*)\\b(?:Trailers?)\\b|\\bTrailers?\\b(?!.*\\b(?:19\\d{2}|20\\d{2}|.(Park|And))\\b))",
+      "flags": 2,
+      "transform": "uniq_concat(value('Trailer'))"
+    },
+    {
+      "name": "ppv",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bPPV\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "ppv",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b\\W?Fight.?Nights?\\W?\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "site",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "^(www?[., ][\\w-]+[. ][\\w-]+(?:[. ][\\w-]+)?)\\s+-\\s*",
+      "flags": 2,
+      "transform": "none"
+    },
+    {
+      "name": "site",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bwww.+rodeo\\b",
+      "flags": 2,
+      "transform": "lowercase"
+    },
+    {
+      "name": "resolution",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\[?\\]?3840x\\d{4}[\\])?]?",
+      "flags": 2,
+      "transform": "value('2160p')"
+    },
+    {
+      "name": "resolution",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\[?\\]?1920x\\d{3,4}[\\])?]?",
+      "flags": 2,
+      "transform": "value('1080p')"
+    },
+    {
+      "name": "resolution",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\[?\\]?1280x\\d{3}[\\])?]?",
+      "flags": 2,
+      "transform": "value('720p')"
+    },
+    {
+      "name": "resolution",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\[?\\]?(\\d{3,4}x\\d{3,4})[\\])?]?p?",
+      "flags": 2,
+      "transform": "value('$1p')"
+    },
+    {
+      "name": "resolution",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(480|720|1080)0[pi]",
+      "flags": 2,
+      "transform": "value('$1p')"
+    },
+    {
+      "name": "resolution",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:QHD|QuadHD|WQHD|2560(\\d+)?x(\\d+)?1440p?)",
+      "flags": 2,
+      "transform": "value('1440p')"
+    },
+    {
+      "name": "resolution",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:Full HD|FHD|1920(\\d+)?x(\\d+)?1080p?)",
+      "flags": 2,
+      "transform": "value('1080p')"
+    },
+    {
+      "name": "resolution",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:BD|HD|M)(2160p?|4k)",
+      "flags": 2,
+      "transform": "value('2160p')"
+    },
+    {
+      "name": "resolution",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:BD|HD|M)1080p?",
+      "flags": 2,
+      "transform": "value('1080p')"
+    },
+    {
+      "name": "resolution",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:BD|HD|M)720p?",
+      "flags": 2,
+      "transform": "value('720p')"
+    },
+    {
+      "name": "resolution",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:BD|HD|M)480p?",
+      "flags": 2,
+      "transform": "value('480p')"
+    },
+    {
+      "name": "resolution",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:4k|2160p|1080p|720p|480p)(?!.*\\b(?:4k|2160p|1080p|720p|480p)\\b)",
+      "flags": 2,
+      "transform": "transform_resolution"
+    },
+    {
+      "name": "resolution",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b4k|21600?[pi]\\b",
+      "flags": 2,
+      "transform": "value('2160p')"
+    },
+    {
+      "name": "resolution",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(\\d{3,4}[pi])",
+      "flags": 2,
+      "transform": "lowercase"
+    },
+    {
+      "name": "resolution",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(240|360|480|576|720|1080|2160|3840)[pi]",
+      "flags": 2,
+      "transform": "lowercase"
+    },
+    {
+      "name": "episode_code",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "[\\[\\()]([A-Fa-f0-9]{8})[\\]\\)]",
+      "flags": 0,
+      "transform": "uppercase"
+    },
+    {
+      "name": "episode_code",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "[\\[\\()]([0-9]{8})[\\]\\)]",
+      "flags": 0,
+      "transform": "uppercase"
+    },
+    {
+      "name": "trash",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:H[DQ][ .-]*)?CAM(?!.?(S|E|\\()\\d+)(?:H[DQ])?(?:[ .-]*Rip|Rp)?\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "trash",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:H[DQ][ .-]*)?S[ \\.\\-]print\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "trash",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:HD[ .-]*)?T(?:ELE)?(C|S)(?:INE|YNC)?(?:Rip)?\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "trash",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bPre.?DVD(?:Rip)?\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "trash",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:DVD?|BD|BR|HD)?[ .-]*Scr(?:eener)?\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "trash",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bDVB[ .-]*(?:Rip)?\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "trash",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bSAT[ .-]*Rips?\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "trash",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bLeaked\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "trash",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "threesixtyp",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "trash",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bR5|R6\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "trash",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bDeleted.*Scenes?\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "trash",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bHQ.?(Clean)?.?(Aud(io)?)?\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "date",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:\\W|^)([[(]?(?:19[6-9]|20[012])[0-9]([. \\-/\\\\])(?:0[1-9]|1[012])\\2(?:0[1-9]|[12][0-9]|3[01])[])]?)(?:\\W|$)",
+      "flags": 0,
+      "transform": "date('YYYY MM DD')"
+    },
+    {
+      "name": "date",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:\\W|^)(\\[?\\]?(?:0[1-9]|[12][0-9]|3[01])([. \\-/\\\\])(?:0[1-9]|1[012])\\2(?:19[6-9]|20[01])[0-9][\\])]?)(?:\\W|$)",
+      "flags": 0,
+      "transform": "date('DD MM YYYY')"
+    },
+    {
+      "name": "date",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:\\W)(\\[?\\]?(?:0[1-9]|1[012])([. \\-/\\\\])(?:0[1-9]|[12][0-9]|3[01])\\2(?:[0][1-9]|[0126789][0-9])[\\])]?)(?:\\W|$)",
+      "flags": 0,
+      "transform": "date('MM DD YY')"
+    },
+    {
+      "name": "date",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:\\W)(\\[?\\]?(?:[0][1-9]|[12][0-9]|3[0-9])([. \\-/\\\\])(?:0[1-9]|1[012])\\2(?:0[1-9]|[12][0-9])[\\])]?)(?:\\W|$)",
+      "flags": 0,
+      "transform": "date('YY MM DD')"
+    },
+    {
+      "name": "date",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:\\W)(\\[?\\]?(?:0[1-9]|[12][0-9]|3[01])([. \\-/\\\\])(?:0[1-9]|1[012])\\2(?:[0][1-9]|[0126789][0-9])[\\])]?)(?:\\W|$)",
+      "flags": 0,
+      "transform": "date('DD MM YY')"
+    },
+    {
+      "name": "date",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:\\W|^)([([]?(?:0?[1-9]|[12][0-9]|3[01])[. ]?(?:st|nd|rd|th)?([. \\-/\\\\])(?:feb(?:ruary)?|jan(?:uary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sept?(?:ember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\\2(?:19[7-9]|20[012])[0-9][)\\]]?)(?=\\W|$)",
+      "flags": 2,
+      "transform": "date(['DD MMM YYYY', 'Do MMM YYYY', 'Do MMMM YYYY'])"
+    },
+    {
+      "name": "date",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:\\W|^)(\\[?\\]?(?:0?[1-9]|[12][0-9]|3[01])[. ]?(?:st|nd|rd|th)?([. \\-\\/\\\\])(?:feb(?:ruary)?|jan(?:uary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sept?(?:ember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\\2(?:0[1-9]|[0126789][0-9])[\\])]?)(?:\\W|$)",
+      "flags": 2,
+      "transform": "date('DD MMM YY')"
+    },
+    {
+      "name": "date",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:\\W|^)(\\[?\\]?20[012][0-9](?:0[1-9]|1[012])(?:0[1-9]|[12][0-9]|3[01])[\\])]?)(?:\\W|$)",
+      "flags": 0,
+      "transform": "date('YYYYMMDD')"
+    },
+    {
+      "name": "complete",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b((?:19\\d|20[012])\\d[ .]?-[ .]?(?:19\\d|20[012])\\d)\\b",
+      "flags": 0,
+      "transform": "boolean"
+    },
+    {
+      "name": "complete",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "[([][ .]?((?:19\\d|20[012])\\d[ .]?-[ .]?\\d{2})[ .]?[)\\]]",
+      "flags": 0,
+      "transform": "boolean"
+    },
+    {
+      "name": "bitrate",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b\\d+[kmg]bps\\b",
+      "flags": 2,
+      "transform": "lowercase"
+    },
+    {
+      "name": "year",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(20[0-9]{2}|2100)(?!\\D*\\d{4}\\b)",
+      "flags": 0,
+      "transform": "integer"
+    },
+    {
+      "name": "year",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "[^SE][([]?(?!^)(?<!\\d|Cap[. ]?)((?:19\\d|20[012])\\d)(?!\\d|kbps)[)\\]]?",
+      "flags": 2,
+      "transform": "integer"
+    },
+    {
+      "name": "year",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?!^\\w{4})^[([]?((?:19\\d|20[012])\\d)(?!\\d|kbps)[)\\]]?",
+      "flags": 2,
+      "transform": "integer"
+    },
+    {
+      "name": "edition",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b\\d{2,3}(th)?[\\.\\s\\-\\+_\\/(),]Anniversary[\\.\\s\\-\\+_\\/(),](Edition|Ed)?\\b",
+      "flags": 2,
+      "transform": "value('Anniversary Edition')"
+    },
+    {
+      "name": "edition",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bUltimate[\\.\\s\\-\\+_\\/(),]Edition\\b",
+      "flags": 2,
+      "transform": "value('Ultimate Edition')"
+    },
+    {
+      "name": "edition",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bExtended[\\.\\s\\-\\+_\\/(),]Director(\\')?s\\b",
+      "flags": 2,
+      "transform": "value('Directors Cut')"
+    },
+    {
+      "name": "edition",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(custom.?)?Extended\\b",
+      "flags": 2,
+      "transform": "value('Extended Edition')"
+    },
+    {
+      "name": "edition",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bDirector(\\')?s.?Cut\\b",
+      "flags": 2,
+      "transform": "value('Directors Cut')"
+    },
+    {
+      "name": "edition",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bCollector(\\')?s\\b",
+      "flags": 2,
+      "transform": "value('Collectors Edition')"
+    },
+    {
+      "name": "edition",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bTheatrical\\b",
+      "flags": 2,
+      "transform": "value('Theatrical')"
+    },
+    {
+      "name": "edition",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\buncut(?!.gems)\\b",
+      "flags": 2,
+      "transform": "value('Uncut')"
+    },
+    {
+      "name": "edition",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bIMAX\\b",
+      "flags": 2,
+      "transform": "value('IMAX')"
+    },
+    {
+      "name": "edition",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b\\.Diamond\\.\\b",
+      "flags": 2,
+      "transform": "value('Diamond Edition')"
+    },
+    {
+      "name": "edition",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bRemaster(?:ed)?\\b",
+      "flags": 2,
+      "transform": "value('Remastered')"
+    },
+    {
+      "name": "upscaled",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:AI.?)?(Upscal(ed?|ing)|Enhanced?)\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "upscaled",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:iris2|regrade|ups(uhd|fhd|hd|4k))\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "upscaled",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b\\.AI\\.\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "convert",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bCONVERT\\b",
+      "flags": 0,
+      "transform": "boolean"
+    },
+    {
+      "name": "hardcoded",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(HC|HARDCODED)\\b",
+      "flags": 0,
+      "transform": "boolean"
+    },
+    {
+      "name": "proper",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:REAL.)?PROPER\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "repack",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bREPACK|RERIP\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "retail",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bRetail\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "remastered",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bRemaster(?:ed)?\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "documentary",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bDOCU(?:menta?ry)?\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "unrated",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bunrated\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "uncensored",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\buncensored\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "commentary",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bcommentary\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "region",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "R\\dJ?\\b",
+      "flags": 0,
+      "transform": "uppercase"
+    },
+    {
+      "name": "region",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(PAL|NTSC|SECAM)\\b",
+      "flags": 2,
+      "transform": "uppercase"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:HD[ .-]*)?T(?:ELE)?S(?:YNC)?(?:Rip)?\\b",
+      "flags": 2,
+      "transform": "value('TeleSync')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:HD[ .-]*)?T(?:ELE)?C(?:INE)?(?:Rip)?\\b",
+      "flags": 0,
+      "transform": "value('TeleCine')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:DVD?|BD|BR|HD)?[ .-]*Scr(?:eener)?\\b",
+      "flags": 2,
+      "transform": "value('SCR')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bP(?:RE)?-?(HD|DVD)(?:Rip)?\\b",
+      "flags": 2,
+      "transform": "value('SCR')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bBlu[ .-]*Ray\\b(?=.*remux)",
+      "flags": 2,
+      "transform": "value('BluRay REMUX')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:BD|BR|UHD)[- ]?remux",
+      "flags": 2,
+      "transform": "value('BluRay REMUX')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?<=remux.*)\\bBlu[ .-]*Ray\\b",
+      "flags": 2,
+      "transform": "value('BluRay REMUX')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bremux\\b",
+      "flags": 2,
+      "transform": "value('REMUX')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bBlu[ .-]*Ray\\b(?![ .-]*Rip)",
+      "flags": 2,
+      "transform": "value('BluRay')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bUHD[ .-]*Rip\\b",
+      "flags": 2,
+      "transform": "value('UHDRip')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bHD[ .-]*Rip\\b",
+      "flags": 2,
+      "transform": "value('HDRip')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bMicro[ .-]*HD\\b",
+      "flags": 2,
+      "transform": "value('HDRip')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:BR|Blu[ .-]*Ray)[ .-]*Rip\\b",
+      "flags": 2,
+      "transform": "value('BRRip')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bBD[ .-]*Rip\\b|\\bBDR\\b|\\bBD-RM\\b|[[(]BD[\\]) .,-]",
+      "flags": 2,
+      "transform": "value('BDRip')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:HD[ .-]*)?DVD[ .-]*Rip\\b",
+      "flags": 2,
+      "transform": "value('DVDRip')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bVHS[ .-]*Rip?\\b",
+      "flags": 2,
+      "transform": "value('VHSRip')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bDVD(?:R\\d?|.*Mux)?\\b",
+      "flags": 2,
+      "transform": "value('DVD')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bVHS\\b",
+      "flags": 2,
+      "transform": "value('VHS')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bPPVRip\\b",
+      "flags": 2,
+      "transform": "value('PPVRip')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bHD.?TV.?Rip\\b",
+      "flags": 2,
+      "transform": "value('HDTVRip')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bDVB[ .-]*(?:Rip)?\\b",
+      "flags": 2,
+      "transform": "value('HDTV')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bSAT[ .-]*Rips?\\b",
+      "flags": 2,
+      "transform": "value('SATRip')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bTVRips?\\b",
+      "flags": 2,
+      "transform": "value('TVRip')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bR5\\b",
+      "flags": 2,
+      "transform": "value('R5')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:DL|WEB|BD|BR)MUX\\b",
+      "flags": 2,
+      "transform": "value('WEBMux')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bWEB[ .-]*Rip\\b",
+      "flags": 2,
+      "transform": "value('WEBRip')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bWEB[ .-]?DL[ .-]?Rip\\b",
+      "flags": 2,
+      "transform": "value('WEB-DLRip')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bWEB[ .-]*(DL|.BDrip|.DLRIP)\\b",
+      "flags": 2,
+      "transform": "value('WEB-DL')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(?<!\\w.)WEB\\b|\\bWEB(?!([ \\.\\-\\(\\],]+\\d))\\b",
+      "flags": 2,
+      "transform": "value('WEB')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:H[DQ][ .-]*)?CAM(?!.?(S|E|\\()\\d+)(?:H[DQ])?(?:[ .-]*Rip|Rp)?\\b",
+      "flags": 2,
+      "transform": "value('CAM')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:H[DQ][ .-]*)?S[ \\.\\-]print",
+      "flags": 2,
+      "transform": "value('CAM')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bPDTV\\b",
+      "flags": 2,
+      "transform": "value('PDTV')"
+    },
+    {
+      "name": "quality",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bHD(.?TV)?\\b",
+      "flags": 2,
+      "transform": "value('HDTV')"
+    },
+    {
+      "name": "bit_depth",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bhevc\\s?10\\b",
+      "flags": 2,
+      "transform": "value('10bit')"
+    },
+    {
+      "name": "bit_depth",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:8|10|12)[-\\.]?(?=bit\\b)",
+      "flags": 2,
+      "transform": "value('$1bit')"
+    },
+    {
+      "name": "bit_depth",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bhdr10\\b",
+      "flags": 2,
+      "transform": "value('10bit')"
+    },
+    {
+      "name": "bit_depth",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bhi10\\b",
+      "flags": 2,
+      "transform": "value('10bit')"
+    },
+    {
+      "name": "bit_depth",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "function",
+      "function": "handle_bit_depth",
+      "transform": "none"
+    },
+    {
+      "name": "hdr",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bDV\\b|dolby.?vision|\\bDoVi\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('DV'))"
+    },
+    {
+      "name": "hdr",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "HDR10(?:\\+|[-\\.\\s]?plus)",
+      "flags": 2,
+      "transform": "uniq_concat(value('HDR10+'))"
+    },
+    {
+      "name": "hdr",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bHDR(?:10)?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('HDR'))"
+    },
+    {
+      "name": "hdr",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bSDR\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('SDR'))"
+    },
+    {
+      "name": "codec",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b[hx][\\. \\-]?264\\b",
+      "flags": 2,
+      "transform": "value('avc')"
+    },
+    {
+      "name": "codec",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b[hx][\\. \\-]?265\\b",
+      "flags": 2,
+      "transform": "value('hevc')"
+    },
+    {
+      "name": "codec",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b\\W264\\W\\b",
+      "flags": 0,
+      "transform": "value('avc')"
+    },
+    {
+      "name": "codec",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b\\W265\\W\\b",
+      "flags": 0,
+      "transform": "value('hevc')"
+    },
+    {
+      "name": "codec",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bHEVC10(bit)?\\b|\\b[xh][\\. \\-]?265\\b",
+      "flags": 2,
+      "transform": "value('hevc')"
+    },
+    {
+      "name": "codec",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bhevc(?:\\s?10)?\\b",
+      "flags": 2,
+      "transform": "value('hevc')"
+    },
+    {
+      "name": "codec",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bdivx|xvid\\b",
+      "flags": 2,
+      "transform": "value('xvid')"
+    },
+    {
+      "name": "codec",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bavc\\b",
+      "flags": 2,
+      "transform": "value('avc')"
+    },
+    {
+      "name": "codec",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bav1\\b",
+      "flags": 2,
+      "transform": "value('av1')"
+    },
+    {
+      "name": "codec",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:mpe?g\\d*)\\b",
+      "flags": 2,
+      "transform": "value('mpeg')"
+    },
+    {
+      "name": "codec",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "function",
+      "function": "handle_space_in_codec",
+      "transform": "none"
+    },
+    {
+      "name": "channels",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "5[\\.\\s]1(?:ch|-S\\d+)?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('5.1'))"
+    },
+    {
+      "name": "channels",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:x[2-4]|5[\\W]1(?:x[2-4])?)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('5.1'))"
+    },
+    {
+      "name": "channels",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b7[\\.\\- ]1(.?ch(annel)?)?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('7.1'))"
+    },
+    {
+      "name": "channels",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\+?2[\\.\\s]0(?:x[2-4])?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('2.0'))"
+    },
+    {
+      "name": "channels",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b2\\.0\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('2.0'))"
+    },
+    {
+      "name": "channels",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:24-bit\\s)?stereo\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('stereo'))"
+    },
+    {
+      "name": "channels",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bmono\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('mono'))"
+    },
+    {
+      "name": "audio",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(?!.+HR)(DTS.?HD.?Ma(ster)?|DTS.?X)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('DTS Lossless'))"
+    },
+    {
+      "name": "audio",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bDTS(?!(.?HD.?Ma(ster)?|.X)).?(HD.?HR|HD)?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('DTS Lossy'))"
+    },
+    {
+      "name": "audio",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(Dolby.?)?Atmos\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('Atmos'))"
+    },
+    {
+      "name": "audio",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(True[ .-]?HD|\\.True\\.)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('TrueHD'))"
+    },
+    {
+      "name": "audio",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bTRUE\\b",
+      "flags": 0,
+      "transform": "uniq_concat(value('TrueHD'))"
+    },
+    {
+      "name": "audio",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bFLAC(?:\\d\\.\\d)?(?:x\\d+)?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('FLAC'))"
+    },
+    {
+      "name": "audio",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "DD2?[\\+p]|DD Plus|Dolby Digital Plus|DDP(5[ \\.\\_]1)?|E-?AC-?3(?:-S\\d+)?",
+      "flags": 0,
+      "transform": "uniq_concat(value('Dolby Digital Plus'))"
+    },
+    {
+      "name": "audio",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bddp(5.1)?",
+      "flags": 2,
+      "transform": "uniq_concat(value('Dolby Digital Plus'))"
+    },
+    {
+      "name": "audio",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(DD|Dolby.?Digital|DolbyD|AC-?3(x2)?(?:-S\\d+)?)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('Dolby Digital'))"
+    },
+    {
+      "name": "audio",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bQ?Q?AAC(x?2)?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('AAC'))"
+    },
+    {
+      "name": "audio",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bL?PCM\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('PCM'))"
+    },
+    {
+      "name": "audio",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bOPUS(\\b|\\d)(?!.*[ ._-](\\d{3,4}p))",
+      "flags": 0,
+      "transform": "uniq_concat(value('OPUS'))"
+    },
+    {
+      "name": "audio",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(H[DQ])?.?(Clean.?Aud(io)?)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('HQ Clean Audio'))"
+    },
+    {
+      "name": "group",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "- ?(?!\\d+$|S\\d+|\\d+x|ep?\\d+|[^[]+]$)([^\\-. []+[^\\-. [)\\]\\d][^\\-. [)\\]]*)(?:\\[[\\w.-]+])?(?=\\.\\w{2,4}$|$)",
+      "flags": 2,
+      "transform": "none"
+    },
+    {
+      "name": "volumes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bvol(?:s|umes?)?[. -]*(?:\\d{1,2}[., +/\\\\&-]+)+\\d{1,2}\\b",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "volumes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "function",
+      "function": "handle_volumes",
+      "transform": "none"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(temporadas?|completa)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('es'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:INT[EÉ]GRALE?)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('fr'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:Saison)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('fr'))"
+    },
+    {
+      "name": "complete",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:INTEGRALE?|INTÉGRALE?)\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "complete",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(Movie|Complete).Collection",
+      "flags": 0,
+      "transform": "boolean"
+    },
+    {
+      "name": "complete",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "Complete(.\\d{1,2})",
+      "flags": 0,
+      "transform": "boolean"
+    },
+    {
+      "name": "complete",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:\\bthe\\W)?(?:\\bcomplete|collection|dvd)?\\b[ .]?\\bbox[ .-]?set\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "complete",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?:\\bthe\\W)?(?:\\bcomplete|collection|dvd)?\\b[ .]?\\bmini[ .-]?series\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "complete",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?:\\bthe\\W)?(?:\\bcomplete\\b|\\bfull\\b|\\ball\\b)\\b.*\\b(?:series|seasons|collection|episodes|set|pack|movies)\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "complete",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(Top\\W+)?\\d+\\W+(movies?|series|seasons?)\\W+Collection",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "complete",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?:\\bthe\\W)?\\bultimate\\b[ .]\\bcollection\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "complete",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bcollection\\b.*\\b(?:set|pack|movies)\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "complete",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bcollection(?:(\\s\\[|\\s\\())",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "complete",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "duology|trilogy|quadr[oi]logy|tetralogy|pentalogy|hexalogy|heptalogy|anthology",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "complete",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bcompleta\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "complete",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bsaga\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "complete",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b\\[Complete\\]\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "complete",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?<!A.?|The.?)\\bComplete\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "complete",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "COMPLETE",
+      "flags": 0,
+      "transform": "boolean"
+    },
+    {
+      "name": "complete",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bkolekcja\\b(?:\\Wfilm(?:y|ów|ow)?)?",
+      "flags": 0,
+      "transform": "boolean"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:complete\\W|seasons?\\W|\\W|^)((?:s\\d{1,2}[., +/\\\\&-]+)+s\\d{1,2}\\b)",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:complete\\W|seasons?\\W|\\W|^)[([]?(s\\d{2,}-\\d{2,}\\b)[)\\]]?",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:complete\\W|seasons?\\W|\\W|^)[([]?(s[1-9]-[2-9])[)\\]]?",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\d+ª(?:.+)?(?:a.?)?\\d+ª(?:(?:.+)?(?:temporadas?))",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:(?:\\bthe\\W)?\\bcomplete\\W)?(?:seasons?|[Сс]езони?|temporadas?)[. ]?[-:]?[. ]?[([]?((?:\\d{1,2}[., /\\\\&]+)+\\d{1,2}\\b)[)\\]]?",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:(?:\\bthe\\W)?\\bcomplete\\W)?(?:seasons?|[Сс]езони?|temporadas?)[. ]?[-:]?[. ]?[([]?((?:\\d{1,2}[.-]+)+[1-9]\\d?\\b)[)\\]]?",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:(?:\\bthe\\W)?\\bcomplete\\W)?season[. ]?[([]?((?:\\d{1,2}[. -]+)+[1-9]\\d?\\b)[)\\]]?(?!.*\\.\\w{2,4}$)",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:(?:\\bthe\\W)?\\bcomplete\\W)?\\bseasons?\\b[. -]?(\\d{1,2}[. -]?(?:to|thru|and|\\+|:)[. -]?\\d{1,2})\\b",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?:(?:\\bthe\\W)?\\bcomplete\\W)?(?:saison|seizoen|season|series|temp(?:orada)?):?[. ]?(\\d{1,2})\\b",
+      "flags": 2,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(\\d{1,2})(?:-?й)?[. _]?(?:[Сс]езон|sez(?:on)?)(?:\\W?\\D|$)",
+      "flags": 2,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "[Сс]езон:?[. _]?№?(\\d{1,2})(?!\\d)",
+      "flags": 2,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:\\D|^)(\\d{1,2})Â?[°ºªa]?[. ]*temporada",
+      "flags": 2,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "t(\\d{1,3})(?:[ex]+|$)",
+      "flags": 2,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?:(?:\\bthe\\W)?\\bcomplete)?(?<![a-z])\\bs(\\d{1,3})(?:[\\Wex]|\\d{2}\\b|$)",
+      "flags": 2,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?:(?:\\bthe\\W)?\\bcomplete\\W)?(?:\\W|^)(\\d{1,2})[. ]?(?:st|nd|rd|th)[. ]*season",
+      "flags": 2,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?<=S)\\d{2}(?=E\\d+)",
+      "flags": 0,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?:\\D|^)(\\d{1,2})[xх]\\d{1,3}(?:\\D|$)",
+      "flags": 0,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bSn([1-9])(?:\\D|$)",
+      "flags": 0,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "[[(](\\d{1,2})\\.\\d{1,3}[)\\]]",
+      "flags": 0,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "-\\s?(\\d{1,2})\\.\\d{2,3}\\s?-",
+      "flags": 0,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?:^|\\/)(\\d{1,2})-\\d{2}\\b(?!-\\d)",
+      "flags": 0,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "[^\\w-](\\d{1,2})-\\d{2}(?=\\.\\w{2,4}$)",
+      "flags": 0,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?<!\\bEp?(?:isode)? ?\\d+\\b.*)\\b(\\d{2})[ ._]\\d{2}(?:.F)?\\.\\w{2,4}$",
+      "flags": 0,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bEp(?:isode)?\\W+(\\d{1,2})\\.\\d{1,3}\\b",
+      "flags": 2,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bSeasons?\\b.*\\b(\\d{1,2}-\\d{1,2})\\b",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?:\\W|^)(\\d{1,2})(?:e|ep)\\d{1,3}(?:\\W|$)",
+      "flags": 2,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bs(\\d{1,4})",
+      "flags": 2,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "seasons",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bТВ-(\\d{1,2})\\b",
+      "flags": 2,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?:[\\W\\d]|^)e[ .]?[([]?(\\d{1,3}(?:[ .-]*(?:[&+]|e){1,2}[ .]?\\d{1,3})+)(?:\\W|$)",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?:[\\W\\d]|^)ep[ .]?[([]?(\\d{1,3}(?:[ .-]*(?:[&+]|ep){1,2}[ .]?\\d{1,3})+)(?:\\W|$)",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?:[\\W\\d]|^)\\d+[xх][ .]?[([]?(\\d{1,3}(?:[ .]?[xх][ .]?\\d{1,3})+)(?:\\W|$)",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "Серии:\\s+(\\d+)\\s+(?:of|из|iz)\\s+\\d+\\b",
+      "flags": 2,
+      "transform": "range_x_of_y_func"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?:[\\W\\d]|^)(?:episodes?|[Сс]ерии:?)[ .]?[([]?(\\d{1,3}(?:[ .+]*[&+][ .]?\\d{1,3})+)(?:\\W|$)",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "[([]?(?:\\D|^)(\\d{1,3}[ .]?ao[ .]?\\d{1,3})[)\\]]?(?:\\W|$)",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?:[\\W\\d]|^)(?:e|eps?|episodes?|[Сс]ерии:?|\\d+[xх])[ .]*[([]?(\\d{1,3}(?:-\\d{1,3})+)(?:\\W|$)",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?:\\W|^)(\\d{1,3}(?:[ .]*~[ .]*\\d{1,3})+)(?:\\W|$)",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bE\\d{1,4}\\s*à\\s*E\\d{1,4}\\b",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "[st]\\d{1,2}[. ]?[xх-]?[. ]?(?:e|x|х|ep|-|\\.)[. ]?(\\d{1,4})(?:[abc]|v0?[1-4]|\\D|$)",
+      "flags": 2,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b[st]\\d{2}(\\d{2})\\b",
+      "flags": 2,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "-\\s(\\d{1,3}[ .]*-[ .]*\\d{1,3})(?!-\\d)(?:\\W|$)",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "s\\d{1,2}\\s?\\((\\d{1,3}[ .]*-[ .]*\\d{1,3})\\)",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?:^|\\/)\\d{1,2}-(\\d{2})\\b(?!-\\d)",
+      "flags": 0,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?<!\\d-)\\b\\d{1,2}-(\\d{2})(?=\\.\\w{2,4}$)",
+      "flags": 0,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?<=^\\[.+].+)[. ]+-[. ]+(\\d{1,4})[. ]+(?=\\W)",
+      "flags": 2,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?<!(?:seasons?|[Сс]езони?)\\W*)(?:[ .([-]|^)(\\d{1,3}(?:[ .]?[,&+~][ .]?\\d{1,3})+)(?:[ .)\\]-]|$)",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?<!(?:seasons?|[Сс]езони?)\\W*)(?:[ .([-]|^)(\\d{1,3}(?:-\\d{1,3})+)(?:[ .)(\\]]|-\\D|$)",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bEp(?:isode)?\\W+\\d{1,2}\\.(\\d{1,3})\\b",
+      "flags": 2,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "Ep.\\d+.-.\\d+",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?:\\b[ée]p?(?:isode)?|[Ээ]пизод|[Сс]ер(?:ии|ия|\\.)?|cap(?:itulo)?|epis[oó]dio)[. ]?[-:#№]?[. ]?(\\d{1,4})(?:[abc]|v0?[1-4]|\\W|$)",
+      "flags": 2,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(\\d{1,3})(?:-?я)?[ ._-]*(?:ser(?:i?[iyj]a|\\b)|[Сс]ер(?:ии|ия|\\.)?)",
+      "flags": 2,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?:\\D|^)\\d{1,2}[. ]?[xх][. ]?(\\d{1,3})(?:[abc]|v0?[1-4]|\\D|$)",
+      "flags": 0,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?<=S\\d{2}E)\\d+",
+      "flags": 2,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "[[(]\\d{1,2}\\.(\\d{1,3})[)\\]]",
+      "flags": 0,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b[Ss]\\d{1,2}[ .](\\d{1,2})\\b",
+      "flags": 0,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "-\\s?\\d{1,2}\\.(\\d{2,3})\\s?-",
+      "flags": 0,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?:\\[|\\()(\\d+)\\s(?:of|из|iz)\\s\\d+(?:\\]|\\))",
+      "flags": 2,
+      "transform": "range_x_of_y_func"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?<=\\D|^)(\\d{1,3})[. ]?(?:of|из|iz)[. ]?\\d{1,3}(?=\\D|$)",
+      "flags": 2,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b\\d{2}[ ._-](\\d{2})(?:.F)?\\.\\w{2,4}$",
+      "flags": 0,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?<!^)\\[(?!720|1080)([\\.\\-\\s\\W]\\d{2,3}[\\.\\-\\s\\W])](?!(?:\\.\\w{2,4})?$)",
+      "flags": 0,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(\\d+)(?=.?\\[([A-Z0-9]{8})])",
+      "flags": 2,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?<![xh])\\b264\\b|\\b265\\b",
+      "flags": 2,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?<!\\bMovie\\s-\\s)(?<=\\s-\\s)\\d+(?=\\s[-(\\s])",
+      "flags": 0,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "(?:\\W|^)(?:\\d+)?(?:e|ep)(\\d{1,3})(?:\\W|$)",
+      "flags": 2,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\d+.-.\\d+TV",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "E(\\d+)\\b",
+      "flags": 2,
+      "transform": "array(integer)"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b\\d{1,4}-\\d{1,4}\\b",
+      "flags": 2,
+      "transform": "range_func"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "function",
+      "function": "handle_episodes",
+      "transform": "none"
+    },
+    {
+      "name": "episodes",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "function",
+      "function": "handle_anime_eps",
+      "transform": "none"
+    },
+    {
+      "name": "country",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(US|UK|AU|NZ|CA)\\b",
+      "flags": 0,
+      "transform": "value('$1')"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bengl?(?:sub[A-Z]*)?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('en'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\beng?sub[A-Z]*\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('en'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bing(?:l[eéê]s)?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('en'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\besub\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('en'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\benglish\\W+(?:subs?|sdh|hi)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('en'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\beng?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('en'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\benglish?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('en'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:JP|JAP|JPN)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('ja'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(japanese|japon[eê]s)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('ja'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:KOR|kor[ .-]?sub)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('ko'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(korean|coreano)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('ko'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:traditional\\W*chinese|chinese\\W*traditional)(?:\\Wchi)?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('zh'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bzh-hant\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('zh'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:mand[ae]rin|ch[sn])\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('zh'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?<!shang-?)\\bCH(?:I|T)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('zh'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(chinese|chin[eê]s)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('zh'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bzh-hans\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('zh'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bFR(?:a|e|anc[eê]s|VF[FQIB2]?)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('fr'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b\\[?(VF[FQRIB2]?\\]?\\b|(VOST)?FR2?)\\b",
+      "flags": 0,
+      "transform": "uniq_concat(value('fr'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(TRUE|SUB).?FRENCH\\b|\\bFRENCH\\b|\\bFre?\\b",
+      "flags": 0,
+      "transform": "uniq_concat(value('fr'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(VOST(?:FR?|A)?)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('fr'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(VF[FQIB2]?|(TRUE|SUB).?FRENCH|(VOST)?FR2?)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('fr'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bspanish\\W?latin|american\\W*(?:spa|esp?)",
+      "flags": 2,
+      "transform": "uniq_concat(value('la'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:\\bla\\b.+(?:cia\\b))",
+      "flags": 2,
+      "transform": "uniq_concat(value('es'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:audio.)?lat(?:in?|ino)?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('la'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:audio.)?(?:ESP?|spa|(en[ .]+)?espa[nñ]ola?|castellano)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('es'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bes(?=[ .,/-]+(?:[A-Z]{2}[ .,/-]+){2,})\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('es'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?<=[ .,/-]+(?:[A-Z]{2}[ .,/-]+){2,})es\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('es'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?<=[ .,/-]+[A-Z]{2}[ .,/-]+)es(?=[ .,/-]+[A-Z]{2}[ .,/-]+)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('es'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bes(?=\\.(?:ass|ssa|srt|sub|idx)$)",
+      "flags": 2,
+      "transform": "uniq_concat(value('es'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bspanish\\W+subs?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('es'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(spanish|espanhol)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('es'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b[\\.\\s\\[]?Sp[\\.\\s\\]]?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('es'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:p[rt]|en|port)[. (\\\\/-]*BR\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('pt'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bbr(?:a|azil|azilian)\\W+(?:pt|por)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('pt'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:leg(?:endado|endas?)?|dub(?:lado)?|portugu[eèê]se?)[. -]*BR\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('pt'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bleg(?:endado|endas?)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('pt'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bportugu[eèê]s[ea]?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('pt'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bPT[. -]*(?:PT|ENG?|sub(?:s|titles?))\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('pt'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bpt(?=\\.(?:ass|ssa|srt|sub|idx)$)",
+      "flags": 2,
+      "transform": "uniq_concat(value('pt'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bPT\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('pt'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bpor\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('pt'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b-?ITA\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('it'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?<!w{3}\\.\\w+\\.)IT(?=[ .,/-]+(?:[a-zA-Z]{2}[ .,/-]+){2,})\\b",
+      "flags": 0,
+      "transform": "uniq_concat(value('it'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bit(?=\\.(?:ass|ssa|srt|sub|idx)$)",
+      "flags": 2,
+      "transform": "uniq_concat(value('it'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bitaliano?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('it'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bgreek[ .-]*(?:audio|lang(?:uage)?|subs?(?:titles?)?)?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('el'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:GER|DEU)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('de'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bde(?=[ .,/-]+(?:[A-Z]{2}[ .,/-]+){2,})\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('de'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?<=[ .,/-]+(?:[A-Z]{2}[ .,/-]+){2,})de\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('de'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?<=[ .,/-]+[A-Z]{2}[ .,/-]+)de(?=[ .,/-]+[A-Z]{2}[ .,/-]+)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('de'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bde(?=\\.(?:ass|ssa|srt|sub|idx)$)",
+      "flags": 2,
+      "transform": "uniq_concat(value('de'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(german|alem[aã]o)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('de'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bRUS?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('ru'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(russian|russo)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('ru'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bUKR\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('uk'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bukrainian\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('uk'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bhin(?:di)?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('hi'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:(?<!w{3}\\.\\w+\\.)tel(?!\\W*aviv)|telugu)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('te'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bt[aâ]m(?:il)?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('ta'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:(?<!w{3}\\.\\w+\\.)MAL(?:ay)?|malayalam)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('ml'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:(?<!w{3}\\.\\w+\\.)KAN(?:nada)?|kannada)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('kn'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:(?<!w{3}\\.\\w+\\.)MAR(?:a(?:thi)?)?|marathi)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('mr'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:(?<!w{3}\\.\\w+\\.)GUJ(?:arati)?|gujarati)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('gu'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:(?<!w{3}\\.\\w+\\.)PUN(?:jabi)?|punjabi)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('pa'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:(?<!w{3}\\.\\w+\\.)BEN(?!.\\bThe|and|of\\b)(?:gali)?|bengali)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('bn'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?<!YTS\\.)LT\\b",
+      "flags": 0,
+      "transform": "uniq_concat(value('lt'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\blithuanian\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('lt'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\blatvian\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('lv'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bestonian\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('et'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:(?<!w{3}\\.\\w+\\.)PL|pol)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('pl'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(polish|polon[eê]s|polaco)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('pl'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(PLDUB|PLSUB|DUBPL|DubbingPL|LekPL|LektorPL)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('pl'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bCZ[EH]?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('cs'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bczech\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('cs'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bslo(?:vak|vakian|subs|[\\]_)]?\\.\\w{2,4}$)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('sk'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bHU\\b",
+      "flags": 0,
+      "transform": "uniq_concat(value('hu'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bHUN(?:garian)?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('hu'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bROM(?:anian)?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('ro'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bRO(?=[ .,/-]*(?:[A-Z]{2}[ .,/-]+)*sub)",
+      "flags": 2,
+      "transform": "uniq_concat(value('ro'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bbul(?:garian)?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('bg'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:srp|serbian)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('sr'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:HRV|croatian)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('hr'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bHR(?=[ .,/-]*(?:[A-Z]{2}[ .,/-]+)*sub)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('hr'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bslovenian\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('sl'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:(?<!w{3}\\.\\w+\\.)NL|dut|holand[eê]s)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('nl'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bdutch\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('nl'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bflemish\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('nl'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:DK|danska|dansub|nordic)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('da'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(danish|dinamarqu[eê]s)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('da'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bdan\\b(?=.*\\.(?:srt|vtt|ssa|ass|sub|idx)$)",
+      "flags": 2,
+      "transform": "uniq_concat(value('da'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:(?<!w{3}\\.\\w+\\.|Sci-)FI|finsk|finsub|nordic)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('fi'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bfinnish\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('fi'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:(?<!w{3}\\.\\w+\\.)SE|swe|swesubs?|sv(?:ensk)?|nordic)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('sv'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(swedish|sueco)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('sv'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:NOR|norsk|norsub|nordic)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('no'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(norwegian|noruegu[eê]s|bokm[aå]l|nob|nor(?=[\\]_)]?\\.\\w{2,4}$))\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('no'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:arabic|[aá]rabe|ara)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('ar'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\barab.*(?:audio|lang(?:uage)?|sub(?:s|titles?)?)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('ar'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bar(?=\\.(?:ass|ssa|srt|sub|idx)$)",
+      "flags": 2,
+      "transform": "uniq_concat(value('ar'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:turkish|tur(?:co)?)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('tr'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(TİVİBU|tivibu|bitturk(.net)?|turktorrent)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('tr'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bvietnamese\\b|\\bvie(?=[\\]_)]?\\.\\w{2,4}$)",
+      "flags": 2,
+      "transform": "uniq_concat(value('vi'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bind(?:onesian)?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('id'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(thai|tailand[eê]s)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('th'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(THA|tha)\\b",
+      "flags": 0,
+      "transform": "uniq_concat(value('th'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:malay|may(?=[\\]_)]?\\.\\w{2,4}$)|(?<=subs?\\([a-z,]+)may)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('ms'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bheb(?:rew|raico)?\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('he'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b(persian|persa)\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('fa'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "[\\u3040-\\u30ff]+",
+      "flags": 2,
+      "transform": "uniq_concat(value('ja'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "[\\u3400-\\u4dbf]+",
+      "flags": 2,
+      "transform": "uniq_concat(value('zh'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "[\\u4e00-\\u9fff]+",
+      "flags": 2,
+      "transform": "uniq_concat(value('zh'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "[\\uf900-\\ufaff]+",
+      "flags": 2,
+      "transform": "uniq_concat(value('zh'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "[\\uff66-\\uff9f]+",
+      "flags": 2,
+      "transform": "uniq_concat(value('ja'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "[\\u0400-\\u04ff]+",
+      "flags": 2,
+      "transform": "uniq_concat(value('ru'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "[\\u0600-\\u06ff]+",
+      "flags": 2,
+      "transform": "uniq_concat(value('ar'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "[\\u0750-\\u077f]+",
+      "flags": 2,
+      "transform": "uniq_concat(value('ar'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "[\\u0c80-\\u0cff]+",
+      "flags": 2,
+      "transform": "uniq_concat(value('kn'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "[\\u0d00-\\u0d7f]+",
+      "flags": 2,
+      "transform": "uniq_concat(value('ml'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "[\\u0e00-\\u0e7f]+",
+      "flags": 2,
+      "transform": "uniq_concat(value('th'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "[\\u0900-\\u097f]+",
+      "flags": 2,
+      "transform": "uniq_concat(value('hi'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "[\\u0980-\\u09ff]+",
+      "flags": 2,
+      "transform": "uniq_concat(value('bn'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "[\\u0a00-\\u0a7f]+",
+      "flags": 2,
+      "transform": "uniq_concat(value('gu'))"
+    },
+    {
+      "name": "languages",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "function",
+      "function": "infer_language_based_on_naming",
+      "transform": "none"
+    },
+    {
+      "name": "subbed",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bmulti(?:ple)?[ .-]*(?:su?$|sub\\w*|dub\\w*)\\b|msub",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "subbed",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:Official.*?|Dual-?)?sub(s|bed)?\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "dubbed",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "[\\[(\\s]?\\bmulti(?:ple)?[ .-]*(?:lang(?:uages?)?|audio|VF2)\\b\\][\\[(\\s]?",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "dubbed",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\btri(?:ple)?[ .-]*(?:audio|dub\\w*)\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "dubbed",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bdual[ .-]*(?:au?$|[aá]udio|line)\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "dubbed",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bdual\\b(?![ .-]*sub)",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "dubbed",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(fan\\s?dub)\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "dubbed",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(Fan.*)?(?:DUBBED|dublado|dubbing|DUBS?)\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "dubbed",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(?!.*\\bsub(s|bed)?\\b)([ _\\-\\[(\\.])?(dual|multi)([ _\\-\\[(\\.])?(audio)\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "dubbed",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(JAP?(anese)?|ZH)\\+ENG?(lish)?|ENG?(lish)?\\+(JAP?(anese)?|ZH)\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "dubbed",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bMULTi\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "group",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "function",
+      "function": "handle_group",
+      "transform": "none"
+    },
+    {
+      "name": "3d",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "(?<=\\b[12]\\d{3}\\b).*\\b(3d|sbs|half[ .-]ou|half[ .-]sbs)\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "3d",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b((Half.)?SBS|HSBS)\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "3d",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bBluRay3D\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "3d",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\bBD3D\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "3d",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": true,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\b3D\\b",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "size",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(\\d+(\\.\\d+)?\\s?(MB|GB|TB))\\b",
+      "flags": 2,
+      "transform": "none"
+    },
+    {
+      "name": "site",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:www?.?)?(?:\\w+\\-)?\\w+[\\.\\s](?:com|org|net|ms|tv|mx|co|\\.party|vip|nu|pics)\\b",
+      "flags": 2,
+      "transform": "value('$1')"
+    },
+    {
+      "name": "site",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "rarbg|torrentleech|(?:the)?piratebay",
+      "flags": 2,
+      "transform": "value('$1')"
+    },
+    {
+      "name": "site",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\[([^\\]]+\\.[^\\]]+)\\](?=\\.\\w{2,4}$|\\s)",
+      "flags": 2,
+      "transform": "value('$1')"
+    },
+    {
+      "name": "network",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bATVP?\\b",
+      "flags": 2,
+      "transform": "value('Apple TV')"
+    },
+    {
+      "name": "network",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bAMZN\\b",
+      "flags": 2,
+      "transform": "value('Amazon')"
+    },
+    {
+      "name": "network",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bNF|Netflix\\b",
+      "flags": 2,
+      "transform": "value('Netflix')"
+    },
+    {
+      "name": "network",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bNICK(elodeon)?\\b",
+      "flags": 2,
+      "transform": "value('Nickelodeon')"
+    },
+    {
+      "name": "network",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bDSNY?P?\\b",
+      "flags": 2,
+      "transform": "value('Disney')"
+    },
+    {
+      "name": "network",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bH(MAX|BO)\\b",
+      "flags": 2,
+      "transform": "value('HBO')"
+    },
+    {
+      "name": "network",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bHULU\\b",
+      "flags": 2,
+      "transform": "value('Hulu')"
+    },
+    {
+      "name": "network",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bCBS\\b",
+      "flags": 2,
+      "transform": "value('CBS')"
+    },
+    {
+      "name": "network",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bNBC\\b",
+      "flags": 2,
+      "transform": "value('NBC')"
+    },
+    {
+      "name": "network",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bAMC\\b",
+      "flags": 2,
+      "transform": "value('AMC')"
+    },
+    {
+      "name": "network",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bPBS\\b",
+      "flags": 2,
+      "transform": "value('PBS')"
+    },
+    {
+      "name": "network",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(Crunchyroll|[. -]CR[. -])\\b",
+      "flags": 2,
+      "transform": "value('Crunchyroll')"
+    },
+    {
+      "name": "network",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bVICE\\b",
+      "flags": 0,
+      "transform": "value('VICE')"
+    },
+    {
+      "name": "network",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bSony\\b",
+      "flags": 2,
+      "transform": "value('Sony')"
+    },
+    {
+      "name": "network",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bHallmark\\b",
+      "flags": 2,
+      "transform": "value('Hallmark')"
+    },
+    {
+      "name": "network",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bAdult.?Swim\\b",
+      "flags": 2,
+      "transform": "value('Adult Swim')"
+    },
+    {
+      "name": "network",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bAnimal.?Planet|ANPL\\b",
+      "flags": 2,
+      "transform": "value('Animal Planet')"
+    },
+    {
+      "name": "network",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bCartoon.?Network(.TOONAMI.BROADCAST)?\\b",
+      "flags": 2,
+      "transform": "value('Cartoon Network')"
+    },
+    {
+      "name": "extension",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\.(3g2|3gp|avi|flv|mkv|mk3d|mov|mp2|mp4|m4v|mpe|mpeg|mpg|mpv|webm|wmv|ogm|divx|ts|m2ts|iso|vob|sub|idx|ttxt|txt|smi|srt|ssa|ass|vtt|nfo|html)$",
+      "flags": 2,
+      "transform": "lowercase"
+    },
+    {
+      "name": "audio",
+      "options": {
+        "skipIfAlreadyFound": false,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bMP3\\b",
+      "flags": 2,
+      "transform": "uniq_concat(value('MP3'))"
+    },
+    {
+      "name": "group",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "\\(([\\w-]+)\\)(?:$|\\.\\w{2,4}$)",
+      "flags": 0,
+      "transform": "none"
+    },
+    {
+      "name": "group",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(INFLATE|DEFLATE)\\b",
+      "flags": 0,
+      "transform": "value('$1')"
+    },
+    {
+      "name": "group",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\b(?:Erai-raws|Erai-raws\\.com)\\b",
+      "flags": 2,
+      "transform": "value('Erai-raws')"
+    },
+    {
+      "name": "group",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "regex",
+      "pattern": "^\\[([^[\\]]+)]",
+      "flags": 0,
+      "transform": "none"
+    },
+    {
+      "name": "group",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": false
+      },
+      "kind": "function",
+      "function": "handle_group_exclusion",
+      "transform": "none"
+    },
+    {
+      "name": "trash",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": false,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "acesse o original",
+      "flags": 2,
+      "transform": "boolean"
+    },
+    {
+      "name": "title",
+      "options": {
+        "skipIfAlreadyFound": true,
+        "skipFromTitle": true,
+        "skipIfFirst": false,
+        "remove": true
+      },
+      "kind": "regex",
+      "pattern": "\\bHigh.?Quality\\b",
+      "flags": 2,
+      "transform": "none"
+    }
+  ]
+}

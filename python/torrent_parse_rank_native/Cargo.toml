@@ -1,0 +1,19 @@
+[package]
+name = "torrent_parse_rank_native"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "PyO3 native bindings for torrent-parse-rank."
+homepage.workspace = true
+repository.workspace = true
+
+[dependencies]
+ptt-core = { path = "../../crates/ptt-core" }
+pyo3.workspace = true
+rtn-core = { path = "../../crates/rtn-core" }
+serde_json.workspace = true
+
+[lib]
+name = "_native"
+crate-type = ["cdylib"]

@@ -1,0 +1,63 @@
+[build-system]
+requires = ["maturin>=1.12.6"]
+build-backend = "maturin"
+
+[project]
+name = "torrent-parse-rank"
+version = "0.1.0"
+authors = [{ name = "Goldy" }]
+description = "High-performance torrent title parsing and ranking for Python, powered by Rust."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "GPL-3.0-or-later"
+license-files = ["LICEN[CS]E*"]
+dependencies = [
+    "orjson>=3.11.7",
+    "pydantic>=2.12.5",
+    "regex>=2026.2.28",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+    "Topic :: Utilities",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+]
+
+[project.urls]
+Homepage = "https://github.com/g0ldyy/torrent-parse-rank"
+Issues = "https://github.com/g0ldyy/torrent-parse-rank/issues"
+
+[dependency-groups]
+dev = [
+    "maturin>=1.12.6",
+    "pytest>=9.0.2",
+    "ruff>=0.15.6",
+]
+
+[tool.maturin]
+manifest-path = "python/torrent_parse_rank_native/Cargo.toml"
+python-source = "python"
+python-packages = ["python/torrent_parse_rank_native", "python/PTT", "python/RTN"]
+include = [
+    { path = "LICENSE", format = "sdist" },
+    { path = "LICENSE", format = "wheel" },
+    { path = "python/PTT/**", format = "wheel" },
+    { path = "python/RTN/**", format = "wheel" },
+]
+module-name = "torrent_parse_rank_native._native"
+features = ["pyo3/extension-module"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+extend-exclude = [
+    ".venv",
+    ".upstream-tests-cache",
+    "parity_tests/upstream",
+    "target",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]

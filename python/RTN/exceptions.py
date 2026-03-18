@@ -1,0 +1,9 @@
+"""Custom exceptions for RTN."""
+
+
+class GarbageTorrent(Exception):
+    """Raised when a torrent is considered garbage or invalid and should be ignored."""
+
+
+class SettingsDisabled(Exception):
+    """Raised when the settings are disabled and cannot be used."""

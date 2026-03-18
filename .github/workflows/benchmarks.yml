@@ -1,0 +1,43 @@
+name: Benchmarks
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 1"
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+
+jobs:
+  criterion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: bench-weekly
+
+      - name: Run ptt-core benchmark
+        run: cargo bench -p ptt-core --bench ptt_bench -- --sample-size 10 --measurement-time 0.2 --warm-up-time 0.5
+
+      - name: Run rtn-core benchmark
+        run: cargo bench -p rtn-core --bench rtn_bench -- --sample-size 10 --measurement-time 0.2 --warm-up-time 0.5
+
+      - name: Upload criterion artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: criterion-results
+          path: |
+            target/criterion/**/benchmark.json
+            target/criterion/**/estimates.json
+            target/criterion/**/sample.json
+            target/criterion/**/tukey.json
+          if-no-files-found: warn
