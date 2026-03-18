@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+export PCRE2_SYS_STATIC="${PCRE2_SYS_STATIC:-1}"
 
 "${ROOT_DIR}/scripts/fetch_upstream_tests.sh"
 

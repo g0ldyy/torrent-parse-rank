@@ -28,13 +28,19 @@ jobs:
         uses: astral-sh/setup-uv@v5
 
       - name: Sync Python dev dependencies
+        env:
+          PCRE2_SYS_STATIC: "1"
         run: |
           uv sync --group dev
 
       - name: Quality gate (full)
+        env:
+          PCRE2_SYS_STATIC: "1"
         run: ./scripts/quality_gate.sh --full
 
       - name: Wheel build check
+        env:
+          PCRE2_SYS_STATIC: "1"
         run: uv run maturin build --release --skip-auditwheel
 
   rust-bench-build:

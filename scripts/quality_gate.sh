@@ -10,6 +10,7 @@ fi
 
 cd "${ROOT_DIR}"
 export UV_CACHE_DIR="${UV_CACHE_DIR:-${ROOT_DIR}/.uv-cache}"
+export PCRE2_SYS_STATIC="${PCRE2_SYS_STATIC:-1}"
 
 if ! uv run pytest --version >/dev/null 2>&1; then
   echo "Missing dev dependency: pytest. Run: uv sync --group dev" >&2
