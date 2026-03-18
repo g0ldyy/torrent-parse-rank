@@ -170,6 +170,9 @@ fn normalize_pattern_for_pcre2(pattern: &str) -> String {
 }
 
 fn simplify_pattern_for_pcre2(pattern: &str) -> Option<String> {
+    if pattern.contains("(?<!\\d|Cap[. ]?)") {
+        return Some(pattern.replace("(?<!\\d|Cap[. ]?)", "(?<!\\d)(?<!Cap)(?<!Cap\\.)(?<!Cap )"));
+    }
     if pattern.contains("Featurettes?") {
         return Some(r"(?:\b(?:19\d{2}|20\d{2})\b.*\bFeaturettes?\b|\bFeaturettes?\b(?!.*\b(?:19\d{2}|20\d{2})\b))".to_owned());
     }
@@ -292,6 +295,7 @@ impl ParserEngine {
         let table: HandlerTable =
             serde_json::from_str(json_text).map_err(|e| ParseError::Data(e.to_string()))?;
         let mut handlers = Vec::with_capacity(table.handlers.len());
+        let mut skipped = 0usize;
         for raw in table.handlers {
             let options: HandlerOptions = raw.options.into();
             let transform = parse_transform(&raw.transform);
@@ -302,7 +306,17 @@ impl ParserEngine {
                         .context("missing pattern")
                         .map_err(|e| ParseError::Data(e.to_string()))?;
                     let ignore_case = (raw.flags.unwrap_or(0) & 2) != 0;
-                    RuntimeHandlerKind::Regex(compile_regex(&pat, ignore_case)?)
+                    match compile_regex(&pat, ignore_case) {
+                        Ok(compiled) => RuntimeHandlerKind::Regex(compiled),
+                        Err(err) => {
+                            skipped += 1;
+                            eprintln!(
+                                "warning: skipping unsupported regex handler '{}': {}",
+                                raw.name, err
+                            );
+                            continue;
+                        }
+                    }
                 }
                 _ => RuntimeHandlerKind::Function(raw.function.unwrap_or_default()),
             };
@@ -312,6 +326,9 @@ impl ParserEngine {
                 transform,
                 options,
             });
+        }
+        if skipped > 0 {
+            eprintln!("warning: skipped {skipped} unsupported regex handler(s)");
         }
         Ok(Self { handlers })
     }
