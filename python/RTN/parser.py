@@ -2,14 +2,12 @@
 
 from typing import Any
 
-from torrent_parse_rank_native._native import rtn_parse
+from torrent_parse_rank_native._native import rtn_check_fetch_and_rank, rtn_parse
 
+from ._native_bridge import data_settings_rank_to_json
 from .exceptions import GarbageTorrent, SettingsDisabled
 from .extras import get_lev_ratio
-from .fetch import check_fetch
 from .models import BaseRankingModel, DefaultRanking, ParsedData, SettingsModel, Torrent
-from .patterns import normalize_title
-from .ranker import get_rank
 
 
 class RTN:
@@ -52,8 +50,12 @@ class RTN:
                     f"correct title: '{correct_title}', parsed title: '{parsed_data.parsed_title}'"
                 )
 
-        is_fetchable, failed_keys = check_fetch(parsed_data, self.settings, speed_mode)
-        rank = get_rank(parsed_data, self.settings, self.ranking_model)
+        data_json, settings_json, rank_model_json = data_settings_rank_to_json(
+            parsed_data, self.settings, self.ranking_model
+        )
+        is_fetchable, failed_keys, rank = rtn_check_fetch_and_rank(
+            data_json, settings_json, rank_model_json, speed_mode
+        )
 
         if remove_trash:
             if not is_fetchable:
@@ -82,15 +84,7 @@ def parse(
     if not raw_title or not isinstance(raw_title, str):
         raise TypeError("The input title must be a non-empty string.")
 
-    payload = dict(rtn_parse(raw_title, translate_langs))
-    payload.setdefault("raw_title", raw_title)
-
-    parsed_title = payload.get("parsed_title") or payload.get("title", "")
-    payload.setdefault("parsed_title", parsed_title)
-    payload.setdefault("normalized_title", normalize_title(str(parsed_title)))
-    payload.setdefault("_3d", payload.get("3d", False))
-
-    parsed_data = ParsedData(**payload)
+    parsed_data = ParsedData(**dict(rtn_parse(raw_title, translate_langs)))
 
     if json:
         return parsed_data.model_dump(mode="json")

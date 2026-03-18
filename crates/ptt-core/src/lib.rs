@@ -1088,8 +1088,7 @@ fn month_to_num(token: &str) -> Option<u32> {
 
 fn convert_months(input: &str) -> String {
     let mut out = input.to_owned();
-    for (pat, replacement) in MONTH_MAPPING {
-        let re = Regex::new(&format!("(?i){pat}")).expect("valid month regex");
+    for (re, replacement) in MONTH_REGEXES.iter() {
         out = re.replace_all(&out, *replacement).to_string();
     }
     out
@@ -1425,6 +1424,17 @@ const MONTH_MAPPING: &[(&str, &str)] = &[
     (r"\bNove\b", "Nov"),
     (r"\bDece\b", "Dec"),
 ];
+static MONTH_REGEXES: Lazy<Vec<(Regex, &'static str)>> = Lazy::new(|| {
+    MONTH_MAPPING
+        .iter()
+        .map(|(pat, replacement)| {
+            (
+                Regex::new(&format!("(?i){pat}")).expect("valid month regex"),
+                *replacement,
+            )
+        })
+        .collect()
+});
 
 static LANGUAGES_TRANSLATION_TABLE: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
     HashMap::from([

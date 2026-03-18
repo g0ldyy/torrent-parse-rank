@@ -14,7 +14,7 @@ from torrent_parse_rank_native._native import (
     rtn_get_rank,
 )
 
-from ._native_bridge import data_to_json, rank_model_to_json, settings_to_json
+from ._native_bridge import data_settings_rank_to_json, data_settings_to_json
 from .models import BaseRankingModel, ParsedData, SettingsModel
 
 
@@ -31,11 +31,13 @@ def _call_rank_native(
     settings: SettingsModel,
     rank_model: BaseRankingModel | None = None,
 ) -> int:
-    data_json = data_to_json(data)
-    settings_json = settings_to_json(settings)
     if rank_model is None:
+        data_json, settings_json = data_settings_to_json(data, settings)
         return int(native_fn(data_json, settings_json))
-    return int(native_fn(data_json, settings_json, rank_model_to_json(rank_model)))
+    data_json, settings_json, rank_model_json = data_settings_rank_to_json(
+        data, settings, rank_model
+    )
+    return int(native_fn(data_json, settings_json, rank_model_json))
 
 
 def get_rank(data: ParsedData, settings: SettingsModel, rank_model: BaseRankingModel) -> int:

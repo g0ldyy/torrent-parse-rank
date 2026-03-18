@@ -18,7 +18,7 @@ from torrent_parse_rank_native._native import (
     rtn_trash_handler,
 )
 
-from ._native_bridge import data_to_json, settings_to_json
+from ._native_bridge import data_settings_to_json, settings_to_json
 from .models import ParsedData, SettingsModel
 
 ANIME = {"ja", "zh", "ko"}
@@ -70,7 +70,7 @@ ALL = ANIME | NON_ANIME
 
 
 def _native_payload(data: ParsedData, settings: SettingsModel) -> tuple[str, str]:
-    return data_to_json(data), settings_to_json(settings)
+    return data_settings_to_json(data, settings)
 
 
 def _run_bool_with_failed_keys(
@@ -93,7 +93,8 @@ def check_fetch(
     if not isinstance(settings, SettingsModel):
         raise TypeError("Settings must be an instance of SettingsModel.")
 
-    return rtn_check_fetch(data_to_json(data), settings_to_json(settings), speed_mode)
+    data_json, settings_json = _native_payload(data, settings)
+    return rtn_check_fetch(data_json, settings_json, speed_mode)
 
 
 def populate_langs(settings: SettingsModel) -> None:

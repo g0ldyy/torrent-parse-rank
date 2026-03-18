@@ -46,5 +46,14 @@ def rank_model_to_json(rank_model: Any) -> str:
     return _dumps(rank_model.model_dump(mode="json", by_alias=True))
 
 
+def data_settings_to_json(data: Any, settings: Any) -> tuple[str, str]:
+    return data_to_json(data), settings_to_json(settings)
+
+
+def data_settings_rank_to_json(data: Any, settings: Any, rank_model: Any) -> tuple[str, str, str]:
+    data_json, settings_json = data_settings_to_json(data, settings)
+    return data_json, settings_json, rank_model_to_json(rank_model)
+
+
 def aliases_to_json(aliases: dict | None) -> str:
     return _dumps(aliases or {})

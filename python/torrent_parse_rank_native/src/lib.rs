@@ -239,6 +239,22 @@ fn rtn_check_fetch(
     check_fetch(&data, &settings, speed_mode).map_err(to_py_value_error)
 }
 
+#[pyfunction]
+#[pyo3(signature = (data_json, settings_json, rank_model_json, speed_mode=true))]
+fn rtn_check_fetch_and_rank(
+    data_json: &str,
+    settings_json: &str,
+    rank_model_json: &str,
+    speed_mode: bool,
+) -> PyResult<(bool, Vec<String>, i64)> {
+    let (data, settings, rank_model) =
+        parse_data_settings_rank_py(data_json, settings_json, rank_model_json)?;
+    let (fetch, failed_keys) =
+        check_fetch(&data, &settings, speed_mode).map_err(to_py_value_error)?;
+    let rank = get_rank(&data, &settings, &rank_model).map_err(to_py_value_error)?;
+    Ok((fetch, failed_keys, rank))
+}
+
 wrap_failed_bool_fn!(rtn_trash_handler, trash_handler);
 wrap_failed_bool_fn!(rtn_adult_handler, adult_handler);
 wrap_failed_bool_fn!(rtn_language_handler, language_handler);
@@ -312,6 +328,7 @@ fn _native(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(rtn_episodes_from_season, m)?)?;
 
     m.add_function(wrap_pyfunction!(rtn_check_fetch, m)?)?;
+    m.add_function(wrap_pyfunction!(rtn_check_fetch_and_rank, m)?)?;
     m.add_function(wrap_pyfunction!(rtn_trash_handler, m)?)?;
     m.add_function(wrap_pyfunction!(rtn_adult_handler, m)?)?;
     m.add_function(wrap_pyfunction!(rtn_language_handler, m)?)?;

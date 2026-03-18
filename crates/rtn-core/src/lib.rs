@@ -51,7 +51,7 @@ const COMMON_LANGS: &[&str] = &[
     "de", "es", "hi", "ta", "ru", "ua", "th", "it", "zh", "ar", "fr",
 ];
 
-const EXTRA_FETCH_RULES: [(&str, &str, &str); 17] = [
+const EXTRA_RULES: [(&str, &str, &str); 15] = [
     ("_3d", "extras", "three_d"),
     ("converted", "extras", "converted"),
     ("documentary", "extras", "documentary"),
@@ -65,29 +65,12 @@ const EXTRA_FETCH_RULES: [(&str, &str, &str); 17] = [
     ("subbed", "extras", "subbed"),
     ("upscaled", "extras", "upscaled"),
     ("site", "extras", "site"),
-    ("size", "trash", "size"),
-    ("bit_depth", "hdr", "10bit"),
     ("scene", "extras", "scene"),
     ("uncensored", "extras", "uncensored"),
 ];
 
-const EXTRA_RANK_RULES: [(&str, &str, &str); 15] = [
-    ("_3d", "extras", "three_d"),
-    ("converted", "extras", "converted"),
-    ("documentary", "extras", "documentary"),
-    ("dubbed", "extras", "dubbed"),
-    ("edition", "extras", "edition"),
-    ("hardcoded", "extras", "hardcoded"),
-    ("network", "extras", "network"),
-    ("proper", "extras", "proper"),
-    ("repack", "extras", "repack"),
-    ("retail", "extras", "retail"),
-    ("subbed", "extras", "subbed"),
-    ("upscaled", "extras", "upscaled"),
-    ("site", "extras", "site"),
-    ("scene", "extras", "scene"),
-    ("uncensored", "extras", "uncensored"),
-];
+const EXTRA_FETCH_ONLY_RULES: [(&str, &str, &str); 2] =
+    [("size", "trash", "size"), ("bit_depth", "hdr", "10bit")];
 
 fn ensure_non_empty_title(raw_title: &str) -> Result<(), RtnError> {
     if raw_title.is_empty() {
@@ -453,46 +436,28 @@ fn custom_rank_i64(settings: &Value, category: &str, key: &str, field: &str, def
         .unwrap_or(default)
 }
 
+fn expand_lang_set(langs: &mut HashSet<String>) {
+    extend_lang_group(langs, "anime", ANIME_LANGS);
+    extend_lang_group(langs, "non_anime", NON_ANIME_LANGS);
+    extend_lang_group(langs, "common", COMMON_LANGS);
+    if langs.contains("all") {
+        langs.extend(
+            ANIME_LANGS
+                .iter()
+                .chain(NON_ANIME_LANGS.iter())
+                .map(|v| (*v).to_string()),
+        );
+    }
+}
+
 pub fn populate_lang_sets(settings: &Value) -> (HashSet<String>, HashSet<String>, HashSet<String>) {
     let mut exclude = settings_languages(settings, "exclude");
     let mut required = settings_languages(settings, "required");
     let mut allowed = settings_languages(settings, "allowed");
 
-    extend_lang_group(&mut exclude, "anime", ANIME_LANGS);
-    extend_lang_group(&mut exclude, "non_anime", NON_ANIME_LANGS);
-    extend_lang_group(&mut exclude, "common", COMMON_LANGS);
-    if exclude.contains("all") {
-        exclude.extend(
-            ANIME_LANGS
-                .iter()
-                .chain(NON_ANIME_LANGS.iter())
-                .map(|v| (*v).to_string()),
-        );
-    }
-
-    extend_lang_group(&mut required, "anime", ANIME_LANGS);
-    extend_lang_group(&mut required, "non_anime", NON_ANIME_LANGS);
-    extend_lang_group(&mut required, "common", COMMON_LANGS);
-    if required.contains("all") {
-        required.extend(
-            ANIME_LANGS
-                .iter()
-                .chain(NON_ANIME_LANGS.iter())
-                .map(|v| (*v).to_string()),
-        );
-    }
-
-    extend_lang_group(&mut allowed, "anime", ANIME_LANGS);
-    extend_lang_group(&mut allowed, "non_anime", NON_ANIME_LANGS);
-    extend_lang_group(&mut allowed, "common", COMMON_LANGS);
-    if allowed.contains("all") {
-        allowed.extend(
-            ANIME_LANGS
-                .iter()
-                .chain(NON_ANIME_LANGS.iter())
-                .map(|v| (*v).to_string()),
-        );
-    }
+    expand_lang_set(&mut exclude);
+    expand_lang_set(&mut required);
+    expand_lang_set(&mut allowed);
 
     (exclude, required, allowed)
 }
@@ -741,7 +706,7 @@ pub fn fetch_other(
     settings: &Value,
     failed_keys: &mut BTreeSet<String>,
 ) -> bool {
-    for (attr, category, key) in EXTRA_FETCH_RULES {
+    for &(attr, category, key) in EXTRA_RULES.iter().chain(EXTRA_FETCH_ONLY_RULES.iter()) {
         if value_is_active(data.get(attr))
             && !custom_rank_bool(settings, category, key, "fetch", true)
         {
@@ -753,6 +718,48 @@ pub fn fetch_other(
     false
 }
 
+fn run_fetch_pipeline(
+    data: &Map<String, Value>,
+    settings: &Value,
+    failed_keys: &mut BTreeSet<String>,
+    speed_mode: bool,
+) -> Result<Option<bool>, RtnError> {
+    if trash_handler(data, settings, failed_keys) && speed_mode {
+        return Ok(Some(false));
+    }
+    if adult_handler(data, settings, failed_keys) && speed_mode {
+        return Ok(Some(false));
+    }
+    if check_required(data, settings)? && speed_mode {
+        return Ok(Some(true));
+    }
+    if check_exclude(data, settings, failed_keys)? && speed_mode {
+        return Ok(Some(false));
+    }
+    if language_handler(data, settings, failed_keys) && speed_mode {
+        return Ok(Some(false));
+    }
+    if fetch_resolution(data, settings, failed_keys) && speed_mode {
+        return Ok(Some(false));
+    }
+    if fetch_quality(data, settings, failed_keys) && speed_mode {
+        return Ok(Some(false));
+    }
+    if fetch_audio(data, settings, failed_keys) && speed_mode {
+        return Ok(Some(false));
+    }
+    if fetch_hdr(data, settings, failed_keys) && speed_mode {
+        return Ok(Some(false));
+    }
+    if fetch_codec(data, settings, failed_keys) && speed_mode {
+        return Ok(Some(false));
+    }
+    if fetch_other(data, settings, failed_keys) && speed_mode {
+        return Ok(Some(false));
+    }
+    Ok(None)
+}
+
 pub fn check_fetch(
     data: &Map<String, Value>,
     settings: &Value,
@@ -760,52 +767,11 @@ pub fn check_fetch(
 ) -> Result<(bool, Vec<String>), RtnError> {
     let mut failed_keys = BTreeSet::new();
 
-    if speed_mode {
-        if trash_handler(data, settings, &mut failed_keys) {
-            return Ok((false, failed_keys.into_iter().collect()));
-        }
-        if adult_handler(data, settings, &mut failed_keys) {
-            return Ok((false, failed_keys.into_iter().collect()));
-        }
-        if check_required(data, settings)? {
+    if let Some(fetchable) = run_fetch_pipeline(data, settings, &mut failed_keys, speed_mode)? {
+        if fetchable {
             return Ok((true, Vec::new()));
         }
-        if check_exclude(data, settings, &mut failed_keys)? {
-            return Ok((false, failed_keys.into_iter().collect()));
-        }
-        if language_handler(data, settings, &mut failed_keys) {
-            return Ok((false, failed_keys.into_iter().collect()));
-        }
-        if fetch_resolution(data, settings, &mut failed_keys) {
-            return Ok((false, failed_keys.into_iter().collect()));
-        }
-        if fetch_quality(data, settings, &mut failed_keys) {
-            return Ok((false, failed_keys.into_iter().collect()));
-        }
-        if fetch_audio(data, settings, &mut failed_keys) {
-            return Ok((false, failed_keys.into_iter().collect()));
-        }
-        if fetch_hdr(data, settings, &mut failed_keys) {
-            return Ok((false, failed_keys.into_iter().collect()));
-        }
-        if fetch_codec(data, settings, &mut failed_keys) {
-            return Ok((false, failed_keys.into_iter().collect()));
-        }
-        if fetch_other(data, settings, &mut failed_keys) {
-            return Ok((false, failed_keys.into_iter().collect()));
-        }
-    } else {
-        trash_handler(data, settings, &mut failed_keys);
-        adult_handler(data, settings, &mut failed_keys);
-        let _ = check_required(data, settings)?;
-        let _ = check_exclude(data, settings, &mut failed_keys)?;
-        language_handler(data, settings, &mut failed_keys);
-        fetch_resolution(data, settings, &mut failed_keys);
-        fetch_quality(data, settings, &mut failed_keys);
-        fetch_audio(data, settings, &mut failed_keys);
-        fetch_hdr(data, settings, &mut failed_keys);
-        fetch_codec(data, settings, &mut failed_keys);
-        fetch_other(data, settings, &mut failed_keys);
+        return Ok((false, failed_keys.into_iter().collect()));
     }
 
     if failed_keys.is_empty() {
@@ -966,7 +932,7 @@ pub fn calculate_extra_ranks(
     }
 
     let mut total = 0;
-    for (attr, category, key) in EXTRA_RANK_RULES {
+    for (attr, category, key) in EXTRA_RULES {
         if value_is_active(data.get(attr)) {
             total += rank_or_custom(rank_model, settings, category, key, key);
         }
