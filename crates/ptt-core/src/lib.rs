@@ -170,9 +170,6 @@ fn normalize_pattern_for_pcre2(pattern: &str) -> String {
 }
 
 fn simplify_pattern_for_pcre2(pattern: &str) -> Option<String> {
-    if pattern.contains("(?<!\\d|Cap[. ]?)") {
-        return Some(pattern.replace("(?<!\\d|Cap[. ]?)", "(?<!\\d)(?<!Cap)(?<!Cap\\.)(?<!Cap )"));
-    }
     if pattern.contains("Featurettes?") {
         return Some(r"(?:\b(?:19\d{2}|20\d{2})\b.*\bFeaturettes?\b|\bFeaturettes?\b(?!.*\b(?:19\d{2}|20\d{2})\b))".to_owned());
     }
@@ -211,9 +208,6 @@ fn simplify_pattern_for_pcre2(pattern: &str) -> Option<String> {
     }
     if pattern.contains("(?<=subs?\\([a-z,]+)") {
         return Some(pattern.replace("(?<=subs?\\([a-z,]+)", ""));
-    }
-    if pattern.contains("(?<=\\b(?:19\\d{2}|20\\d{2})\\b.*)") {
-        return Some(pattern.replace("(?<=\\b(?:19\\d{2}|20\\d{2})\\b.*)", ""));
     }
     None
 }
