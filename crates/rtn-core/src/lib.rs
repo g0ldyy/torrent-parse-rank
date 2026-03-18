@@ -27,16 +27,11 @@ fn map_bool(map: &Map<String, Value>, key: &str) -> bool {
     map.get(key).and_then(Value::as_bool).unwrap_or(false)
 }
 
-fn map_strings(map: &Map<String, Value>, key: &str) -> Vec<String> {
+fn map_array<'a>(map: &'a Map<String, Value>, key: &str) -> &'a [Value] {
     map.get(key)
         .and_then(Value::as_array)
-        .map(|arr| {
-            arr.iter()
-                .filter_map(Value::as_str)
-                .map(ToString::to_string)
-                .collect()
-        })
-        .unwrap_or_default()
+        .map(Vec::as_slice)
+        .unwrap_or(&[])
 }
 
 fn map_i64s(map: &Map<String, Value>, key: &str) -> Vec<i64> {
@@ -331,8 +326,11 @@ pub fn episodes_from_season(raw_title: &str, season_num: i64) -> Result<Vec<i64>
     ensure_non_empty_title(raw_title)?;
 
     let data = parse_title(raw_title, false)?;
-    let seasons = map_i64s(&data, "seasons");
-    if !seasons.contains(&season_num) {
+    let has_season = map_array(&data, "seasons")
+        .iter()
+        .filter_map(Value::as_i64)
+        .any(|season| season == season_num);
+    if !has_season {
         return Ok(Vec::new());
     }
     Ok(map_i64s(&data, "episodes"))
@@ -511,9 +509,10 @@ pub fn trash_handler(
             failed_keys.insert("trash_quality".to_string());
             return true;
         }
-        if map_strings(data, "audio")
+        if map_array(data, "audio")
             .iter()
-            .any(|a| a == "HQ Clean Audio")
+            .filter_map(Value::as_str)
+            .any(|audio| audio == "HQ Clean Audio")
         {
             failed_keys.insert("trash_audio".to_string());
             return true;
@@ -590,7 +589,7 @@ pub fn language_handler(
     failed_keys: &mut BTreeSet<String>,
 ) -> bool {
     let (exclude, required, allowed) = populate_lang_sets(settings);
-    let langs: Vec<String> = map_strings(data, "languages");
+    let langs = map_array(data, "languages");
 
     if langs.is_empty() {
         if settings_option_bool(settings, "remove_unknown_languages", false) {
@@ -604,24 +603,37 @@ pub fn language_handler(
         return false;
     }
 
-    if !required.is_empty() && !langs.iter().any(|lang| required.contains(lang)) {
+    if !required.is_empty()
+        && !langs
+            .iter()
+            .filter_map(Value::as_str)
+            .any(|lang| required.contains(lang))
+    {
         failed_keys.insert("missing_required_language".to_string());
         return true;
     }
 
-    if langs.iter().any(|lang| lang == "en")
+    if langs
+        .iter()
+        .filter_map(Value::as_str)
+        .any(|lang| lang == "en")
         && settings_option_bool(settings, "allow_english_in_languages", false)
     {
         return false;
     }
 
-    if !allowed.is_empty() && langs.iter().any(|lang| allowed.contains(lang)) {
+    if !allowed.is_empty()
+        && langs
+            .iter()
+            .filter_map(Value::as_str)
+            .any(|lang| allowed.contains(lang))
+    {
         return false;
     }
 
     let mut excluded = false;
-    for lang in langs {
-        if exclude.contains(&lang) {
+    for lang in langs.iter().filter_map(Value::as_str) {
+        if exclude.contains(lang) {
             failed_keys.insert(format!("lang_{lang}"));
             excluded = true;
         }
@@ -695,8 +707,8 @@ pub fn fetch_audio(
     settings: &Value,
     failed_keys: &mut BTreeSet<String>,
 ) -> bool {
-    for audio in map_strings(data, "audio") {
-        let Some((category, key)) = audio_mapping(audio.as_str()) else {
+    for audio in map_array(data, "audio").iter().filter_map(Value::as_str) {
+        let Some((category, key)) = audio_mapping(audio) else {
             continue;
         };
         if !custom_rank_bool(settings, category, key, "fetch", true) {
@@ -712,8 +724,8 @@ pub fn fetch_hdr(
     settings: &Value,
     failed_keys: &mut BTreeSet<String>,
 ) -> bool {
-    for hdr in map_strings(data, "hdr") {
-        if let Some(key) = hdr_key(hdr.as_str())
+    for hdr in map_array(data, "hdr").iter().filter_map(Value::as_str) {
+        if let Some(key) = hdr_key(hdr)
             && !custom_rank_bool(settings, "hdr", key, "fetch", true)
         {
             failed_keys.insert(format!("hdr_{key}"));
@@ -848,8 +860,11 @@ pub fn calculate_preferred_langs(data: &Map<String, Value>, settings: &Value) ->
     if preferred.is_empty() {
         return 0;
     }
-    let langs = map_strings(data, "languages");
-    if langs.iter().any(|lang| preferred.contains(lang)) {
+    if map_array(data, "languages")
+        .iter()
+        .filter_map(Value::as_str)
+        .any(|lang| preferred.contains(lang))
+    {
         10_000
     } else {
         0
@@ -893,8 +908,8 @@ pub fn calculate_codec_rank(
 pub fn calculate_hdr_rank(data: &Map<String, Value>, settings: &Value, rank_model: &Value) -> i64 {
     let mut total = 0;
 
-    for hdr in map_strings(data, "hdr") {
-        if let Some(key) = hdr_key(hdr.as_str()) {
+    for hdr in map_array(data, "hdr").iter().filter_map(Value::as_str) {
+        if let Some(key) = hdr_key(hdr) {
             total += rank_or_custom(rank_model, settings, "hdr", key, key);
         }
     }
@@ -912,8 +927,8 @@ pub fn calculate_audio_rank(
     rank_model: &Value,
 ) -> i64 {
     let mut total = 0;
-    for audio in map_strings(data, "audio") {
-        if let Some((category, key)) = audio_mapping(audio.as_str()) {
+    for audio in map_array(data, "audio").iter().filter_map(Value::as_str) {
+        if let Some((category, key)) = audio_mapping(audio) {
             total += rank_or_custom(rank_model, settings, category, key, key);
         }
     }
@@ -926,8 +941,8 @@ pub fn calculate_channels_rank(
     rank_model: &Value,
 ) -> i64 {
     let mut total = 0;
-    for channel in map_strings(data, "channels") {
-        total += match channel.as_str() {
+    for channel in map_array(data, "channels").iter().filter_map(Value::as_str) {
+        total += match channel {
             "5.1" | "7.1" => rank_or_custom(rank_model, settings, "audio", "surround", "surround"),
             "stereo" | "2.0" => rank_or_custom(rank_model, settings, "audio", "stereo", "stereo"),
             "mono" => rank_or_custom(rank_model, settings, "audio", "mono", "mono"),
@@ -943,9 +958,9 @@ pub fn calculate_extra_ranks(
     rank_model: &Value,
 ) -> i64 {
     let has_core = data.get("bit_depth").and_then(Value::as_str).is_some()
-        || !map_strings(data, "hdr").is_empty()
-        || !map_i64s(data, "seasons").is_empty()
-        || !map_i64s(data, "episodes").is_empty();
+        || !map_array(data, "hdr").is_empty()
+        || !map_array(data, "seasons").is_empty()
+        || !map_array(data, "episodes").is_empty();
     if !has_core {
         return 0;
     }
