@@ -38,12 +38,10 @@ dev = [
 [tool.maturin]
 manifest-path = "python/torrent_parse_rank_native/Cargo.toml"
 python-source = "python"
-python-packages = ["python/torrent_parse_rank_native", "python/PTT", "python/RTN"]
+python-packages = ["torrent_parse_rank_native", "PTT", "RTN"]
 include = [
     { path = "LICENSE", format = "sdist" },
     { path = "LICENSE", format = "wheel" },
-    { path = "python/PTT/**", format = "wheel" },
-    { path = "python/RTN/**", format = "wheel" },
 ]
 module-name = "torrent_parse_rank_native._native"
 features = ["pyo3/extension-module"]
