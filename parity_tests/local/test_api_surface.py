@@ -133,17 +133,24 @@ def test_batched_fetch_and_rank_matches_single_calls():
 def test_batched_fetch_and_rank_matches_single_calls_with_patterns():
     data_items = [
         rtn_parse("The.Matrix.1999.1080p.BluRay.x264.DTS"),
-        rtn_parse("Some.Movie.2020.CAM.XVID.MP3"),
-        rtn_parse("Show.S02E03.2160p.WEB-DL.DV.HDR.HEVC"),
+        rtn_parse("Some.Movie.2020.MULTI.FRENCH.CAM.XVID.MP3"),
+        rtn_parse("Show.S02E03.JAPANESE.2160p.WEB-DL.DV.HDR.HEVC"),
     ]
     settings = SettingsModel(
         require=[r"(?:matrix|movie|show)"],
         exclude=[r"(?:sample|password)$"],
         preferred=[r"(?:web.?dl|hevc|x265)"],
+        languages={
+            "allowed": ["fr"],
+            "exclude": ["anime", "non_anime"],
+            "preferred": ["fr", "ja"],
+        },
     )
     ranking = DefaultRanking()
 
-    actual = check_fetch_and_rank_many(data_items, settings, ranking)
-    expected = [check_fetch_and_rank(data, settings, ranking) for data in data_items]
+    actual = check_fetch_and_rank_many(data_items, settings, ranking, speed_mode=False)
+    expected = [
+        check_fetch_and_rank(data, settings, ranking, speed_mode=False) for data in data_items
+    ]
 
     assert actual == expected

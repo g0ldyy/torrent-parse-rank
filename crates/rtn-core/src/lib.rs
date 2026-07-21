@@ -290,6 +290,32 @@ struct PreparedPattern {
     text: String,
 }
 
+struct PreparedBatchSettings {
+    required_patterns: Vec<PreparedPattern>,
+    excluded_patterns: Vec<PreparedPattern>,
+    preferred_patterns: Vec<PreparedPattern>,
+    excluded_languages: HashSet<String>,
+    required_languages: HashSet<String>,
+    allowed_languages: HashSet<String>,
+    preferred_languages: HashSet<String>,
+}
+
+impl PreparedBatchSettings {
+    fn new(settings: &Value) -> Result<Self, RtnError> {
+        let (excluded_languages, required_languages, allowed_languages) =
+            populate_lang_sets(settings);
+        Ok(Self {
+            required_patterns: prepare_patterns(settings_value_array(settings, "require"))?,
+            excluded_patterns: prepare_patterns(settings_value_array(settings, "exclude"))?,
+            preferred_patterns: prepare_patterns(settings_value_array(settings, "preferred"))?,
+            excluded_languages,
+            required_languages,
+            allowed_languages,
+            preferred_languages: settings_languages(settings, "preferred"),
+        })
+    }
+}
+
 fn prepare_patterns(patterns: &[Value]) -> Result<Vec<PreparedPattern>, RtnError> {
     patterns
         .iter()
@@ -626,6 +652,17 @@ pub fn language_handler(
     failed_keys: &mut BTreeSet<String>,
 ) -> bool {
     let (exclude, required, allowed) = populate_lang_sets(settings);
+    language_handler_prepared(data, settings, failed_keys, &exclude, &required, &allowed)
+}
+
+fn language_handler_prepared(
+    data: &Map<String, Value>,
+    settings: &Value,
+    failed_keys: &mut BTreeSet<String>,
+    exclude: &HashSet<String>,
+    required: &HashSet<String>,
+    allowed: &HashSet<String>,
+) -> bool {
     let langs = map_array(data, "languages");
 
     if langs.is_empty() {
@@ -789,7 +826,7 @@ fn run_fetch_pipeline(
     settings: &Value,
     failed_keys: &mut BTreeSet<String>,
     speed_mode: bool,
-    prepared_patterns: Option<(&[PreparedPattern], &[PreparedPattern])>,
+    prepared: Option<&PreparedBatchSettings>,
 ) -> Result<Option<bool>, RtnError> {
     if trash_handler(data, settings, failed_keys) && speed_mode {
         return Ok(Some(false));
@@ -797,21 +834,32 @@ fn run_fetch_pipeline(
     if adult_handler(data, settings, failed_keys) && speed_mode {
         return Ok(Some(false));
     }
-    let required = match prepared_patterns {
-        Some((required, _)) => check_required_prepared(data, required)?,
+    let required = match prepared {
+        Some(prepared) => check_required_prepared(data, &prepared.required_patterns)?,
         None => check_required(data, settings)?,
     };
     if required && speed_mode {
         return Ok(Some(true));
     }
-    let excluded = match prepared_patterns {
-        Some((_, excluded)) => check_exclude_prepared(data, excluded, failed_keys)?,
+    let excluded = match prepared {
+        Some(prepared) => check_exclude_prepared(data, &prepared.excluded_patterns, failed_keys)?,
         None => check_exclude(data, settings, failed_keys)?,
     };
     if excluded && speed_mode {
         return Ok(Some(false));
     }
-    if language_handler(data, settings, failed_keys) && speed_mode {
+    let language_excluded = match prepared {
+        Some(prepared) => language_handler_prepared(
+            data,
+            settings,
+            failed_keys,
+            &prepared.excluded_languages,
+            &prepared.required_languages,
+            &prepared.allowed_languages,
+        ),
+        None => language_handler(data, settings, failed_keys),
+    };
+    if language_excluded && speed_mode {
         return Ok(Some(false));
     }
     if fetch_resolution(data, settings, failed_keys) && speed_mode {
@@ -839,17 +887,13 @@ fn check_fetch_impl(
     data: &Map<String, Value>,
     settings: &Value,
     speed_mode: bool,
-    prepared_patterns: Option<(&[PreparedPattern], &[PreparedPattern])>,
+    prepared: Option<&PreparedBatchSettings>,
 ) -> Result<(bool, Vec<String>), RtnError> {
     let mut failed_keys = BTreeSet::new();
 
-    if let Some(fetchable) = run_fetch_pipeline(
-        data,
-        settings,
-        &mut failed_keys,
-        speed_mode,
-        prepared_patterns,
-    )? {
+    if let Some(fetchable) =
+        run_fetch_pipeline(data, settings, &mut failed_keys, speed_mode, prepared)?
+    {
         if fetchable {
             return Ok((true, Vec::new()));
         }
@@ -922,6 +966,13 @@ fn calculate_preferred_prepared(
 
 pub fn calculate_preferred_langs(data: &Map<String, Value>, settings: &Value) -> i64 {
     let preferred = settings_languages(settings, "preferred");
+    calculate_preferred_langs_prepared(data, &preferred)
+}
+
+fn calculate_preferred_langs_prepared(
+    data: &Map<String, Value>,
+    preferred: &HashSet<String>,
+) -> i64 {
     if preferred.is_empty() {
         return 0;
     }
@@ -1055,7 +1106,7 @@ fn get_rank_impl(
     data: &Map<String, Value>,
     settings: &Value,
     rank_model: &Value,
-    preferred_patterns: Option<&[PreparedPattern]>,
+    prepared: Option<&PreparedBatchSettings>,
 ) -> Result<i64, RtnError> {
     if map_str(data, "raw_title").unwrap_or_default().is_empty() {
         return Err(RtnError::InvalidInput(
@@ -1070,11 +1121,14 @@ fn get_rank_impl(
     rank += calculate_audio_rank(data, settings, rank_model);
     rank += calculate_codec_rank(data, settings, rank_model);
     rank += calculate_extra_ranks(data, settings, rank_model);
-    rank += match preferred_patterns {
-        Some(patterns) => calculate_preferred_prepared(data, patterns)?,
+    rank += match prepared {
+        Some(prepared) => calculate_preferred_prepared(data, &prepared.preferred_patterns)?,
         None => calculate_preferred(data, settings)?,
     };
-    rank += calculate_preferred_langs(data, settings);
+    rank += match prepared {
+        Some(prepared) => calculate_preferred_langs_prepared(data, &prepared.preferred_languages),
+        None => calculate_preferred_langs(data, settings),
+    };
     Ok(rank)
 }
 
@@ -1084,20 +1138,14 @@ pub fn check_fetch_and_rank_many(
     rank_model: &Value,
     speed_mode: bool,
 ) -> Result<Vec<(bool, Vec<String>, i64)>, RtnError> {
-    let required_patterns = prepare_patterns(settings_value_array(settings, "require"))?;
-    let excluded_patterns = prepare_patterns(settings_value_array(settings, "exclude"))?;
-    let preferred_patterns = prepare_patterns(settings_value_array(settings, "preferred"))?;
+    let prepared = PreparedBatchSettings::new(settings)?;
 
     data_items
         .iter()
         .map(|data| {
-            let (fetchable, failed_keys) = check_fetch_impl(
-                data,
-                settings,
-                speed_mode,
-                Some((&required_patterns, &excluded_patterns)),
-            )?;
-            let rank = get_rank_impl(data, settings, rank_model, Some(&preferred_patterns))?;
+            let (fetchable, failed_keys) =
+                check_fetch_impl(data, settings, speed_mode, Some(&prepared))?;
+            let rank = get_rank_impl(data, settings, rank_model, Some(&prepared))?;
             Ok((fetchable, failed_keys, rank))
         })
         .collect()
