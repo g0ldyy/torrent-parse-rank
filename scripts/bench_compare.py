@@ -20,9 +20,9 @@ class BenchResult:
 
 
 ROOT = Path(__file__).resolve().parents[1]
-PORT_ROOT = ROOT.parent
-UPSTREAM_PTT = PORT_ROOT / "PTT"
-UPSTREAM_RTN = PORT_ROOT / "rank-torrent-name"
+UPSTREAM_CACHE = ROOT / ".upstream-tests-cache"
+UPSTREAM_PTT = Path(os.environ.get("UPSTREAM_PTT_DIR", UPSTREAM_CACHE / "PTT"))
+UPSTREAM_RTN = Path(os.environ.get("UPSTREAM_RTN_DIR", UPSTREAM_CACHE / "RTN"))
 RUST_PY = ROOT / "python"
 UPSTREAM_DEPS = [
     "arrow>=1.3.0,<2",
@@ -62,13 +62,16 @@ def make_titles(n: int):
 
 
 def run_bench(name, n, fn, titles):
+    for title in titles[: min(100, len(titles))]:
+        fn(title)
+
     lat = []
-    start = time.perf_counter()
+    start = time.perf_counter_ns()
     for t in titles:
-        t0 = time.perf_counter()
+        t0 = time.perf_counter_ns()
         fn(t)
-        lat.append((time.perf_counter() - t0) * 1000)
-    total = time.perf_counter() - start
+        lat.append((time.perf_counter_ns() - t0) / 1_000_000)
+    total = (time.perf_counter_ns() - start) / 1_000_000_000
     return {
         "parser": name,
         "n": n,
@@ -96,7 +99,7 @@ def run_mode(mode: str, n: int) -> list[BenchResult]:
         command = [sys.executable, "-c", _bench_code()]
     elif mode == "upstream":
         env["PYTHONPATH"] = os.pathsep.join([str(UPSTREAM_PTT), str(UPSTREAM_RTN)])
-        command = ["uv", "run"]
+        command = ["uv", "run", "--python", sys.executable]
         for dep in UPSTREAM_DEPS:
             command.extend(["--with", dep])
         command.extend(["python", "-c", _bench_code()])
@@ -145,7 +148,22 @@ def run_mode(mode: str, n: int) -> list[BenchResult]:
 
 def main() -> None:
     try:
-        sizes = [1000, 10000, 30000]
+        missing_upstreams = [
+            str(path) for path in (UPSTREAM_PTT, UPSTREAM_RTN) if not path.is_dir()
+        ]
+        if missing_upstreams:
+            raise RuntimeError(
+                "Missing upstream benchmark checkout(s): "
+                + ", ".join(missing_upstreams)
+                + ". Run ./scripts/fetch_upstream_tests.sh first or set "
+                "UPSTREAM_PTT_DIR/UPSTREAM_RTN_DIR."
+            )
+
+        sizes = [
+            int(value) for value in os.environ.get("BENCH_SIZES", "1000,10000,30000").split(",")
+        ]
+        if not sizes or any(size <= 0 for size in sizes):
+            raise RuntimeError("BENCH_SIZES must contain positive comma-separated integers.")
         all_rows: list[BenchResult] = []
         for n in sizes:
             all_rows.extend(run_mode("upstream", n))

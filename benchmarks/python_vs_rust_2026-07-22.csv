@@ -1,0 +1,13 @@
+mode,parser,n,total_s,throughput,p50_ms,p95_ms
+upstream,PTT.parse_title,1000,0.536501,1863.9,0.544,0.566
+upstream,RTN.parse,1000,0.573037,1745.1,0.577,0.617
+rust,PTT.parse_title,1000,0.081145,12323.7,0.082,0.091
+rust,RTN.parse,1000,0.098829,10118.4,0.099,0.110
+upstream,PTT.parse_title,10000,5.466068,1829.5,0.550,0.585
+upstream,RTN.parse,10000,5.820753,1718.0,0.585,0.622
+rust,PTT.parse_title,10000,0.825222,12118.0,0.082,0.093
+rust,RTN.parse,10000,1.006619,9934.2,0.101,0.112
+upstream,PTT.parse_title,30000,16.448612,1823.9,0.553,0.582
+upstream,RTN.parse,30000,17.482999,1716.0,0.587,0.619
+rust,PTT.parse_title,30000,2.464778,12171.5,0.083,0.092
+rust,RTN.parse,30000,3.038794,9872.3,0.102,0.113
