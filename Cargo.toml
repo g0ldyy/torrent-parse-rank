@@ -22,7 +22,6 @@ criterion = "0.8.2"
 fancy-regex = "0.17.0"
 indexmap = "2.13.0"
 once_cell = "1.21.4"
-parking_lot = "0.12.5"
 pcre2 = "0.2.11"
 pyo3 = { version = "0.28.2", features = ["extension-module", "abi3-py310"] }
 serde = { version = "1.0.228", features = ["derive"] }
