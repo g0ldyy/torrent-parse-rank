@@ -9,10 +9,11 @@ use pyo3::types::{PyDict, PyList};
 use rtn_core::{
     RtnError, adult_handler, calculate_audio_rank, calculate_channels_rank, calculate_codec_rank,
     calculate_extra_ranks, calculate_hdr_rank, calculate_preferred, calculate_preferred_langs,
-    calculate_quality_rank, check_exclude, check_fetch, check_required, episodes_from_season,
-    extract_episodes, extract_seasons, fetch_audio, fetch_codec, fetch_hdr, fetch_other,
-    fetch_quality, fetch_resolution, get_lev_ratio, get_rank, language_handler, normalize_title,
-    parse, parse_json_object, parse_json_value, populate_lang_sets, title_match, trash_handler,
+    calculate_quality_rank, check_exclude, check_fetch, check_fetch_and_rank_many, check_required,
+    episodes_from_season, extract_episodes, extract_seasons, fetch_audio, fetch_codec, fetch_hdr,
+    fetch_other, fetch_quality, fetch_resolution, get_lev_ratio, get_rank, language_handler,
+    normalize_title, parse, parse_json_object, parse_json_value, populate_lang_sets, title_match,
+    trash_handler,
 };
 use serde_json::{Map, Value};
 
@@ -271,16 +272,14 @@ fn rtn_check_fetch_and_rank_many(
     let rank_model =
         parse_json_value(rank_model_json, "rank_model_json").map_err(to_py_value_error)?;
 
-    data_jsons
+    let data_items = data_jsons
         .iter()
-        .map(|data_json| {
-            let data = parse_json_object(data_json, "data_json").map_err(to_py_value_error)?;
-            let (fetch, failed_keys) =
-                check_fetch(&data, &settings, speed_mode).map_err(to_py_value_error)?;
-            let rank = get_rank(&data, &settings, &rank_model).map_err(to_py_value_error)?;
-            Ok((fetch, failed_keys, rank))
-        })
-        .collect()
+        .map(|data_json| parse_json_object(data_json, "data_json"))
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(to_py_value_error)?;
+
+    check_fetch_and_rank_many(&data_items, &settings, &rank_model, speed_mode)
+        .map_err(to_py_value_error)
 }
 
 wrap_failed_bool_fn!(rtn_trash_handler, trash_handler);

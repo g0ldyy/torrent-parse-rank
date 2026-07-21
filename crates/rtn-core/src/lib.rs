@@ -285,6 +285,34 @@ pub fn check_pattern(patterns: &[Value], raw_title: &str) -> Result<bool, RtnErr
     Ok(false)
 }
 
+struct PreparedPattern {
+    regex: fancy_regex::Regex,
+    text: String,
+}
+
+fn prepare_patterns(patterns: &[Value]) -> Result<Vec<PreparedPattern>, RtnError> {
+    patterns
+        .iter()
+        .filter_map(|pattern| match compile_pattern(pattern) {
+            Ok(Some(regex)) => Some(Ok(PreparedPattern {
+                regex,
+                text: pattern_text(pattern).to_string(),
+            })),
+            Ok(None) => None,
+            Err(error) => Some(Err(error)),
+        })
+        .collect()
+}
+
+fn matches_prepared(patterns: &[PreparedPattern], raw_title: &str) -> Result<bool, RtnError> {
+    for pattern in patterns {
+        if pattern.regex.is_match(raw_title)? {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
 pub fn parse(raw_title: &str, translate_langs: bool) -> Result<Map<String, Value>, RtnError> {
     ensure_non_empty_title(raw_title)?;
 
@@ -570,6 +598,28 @@ pub fn check_exclude(
     Ok(false)
 }
 
+fn check_required_prepared(
+    data: &Map<String, Value>,
+    patterns: &[PreparedPattern],
+) -> Result<bool, RtnError> {
+    matches_prepared(patterns, map_str(data, "raw_title").unwrap_or_default())
+}
+
+fn check_exclude_prepared(
+    data: &Map<String, Value>,
+    patterns: &[PreparedPattern],
+    failed_keys: &mut BTreeSet<String>,
+) -> Result<bool, RtnError> {
+    let raw_title = map_str(data, "raw_title").unwrap_or_default();
+    for pattern in patterns {
+        if pattern.regex.is_match(raw_title)? {
+            failed_keys.insert(format!("exclude_regex '{}'", pattern.text));
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
 pub fn language_handler(
     data: &Map<String, Value>,
     settings: &Value,
@@ -739,6 +789,7 @@ fn run_fetch_pipeline(
     settings: &Value,
     failed_keys: &mut BTreeSet<String>,
     speed_mode: bool,
+    prepared_patterns: Option<(&[PreparedPattern], &[PreparedPattern])>,
 ) -> Result<Option<bool>, RtnError> {
     if trash_handler(data, settings, failed_keys) && speed_mode {
         return Ok(Some(false));
@@ -746,10 +797,18 @@ fn run_fetch_pipeline(
     if adult_handler(data, settings, failed_keys) && speed_mode {
         return Ok(Some(false));
     }
-    if check_required(data, settings)? && speed_mode {
+    let required = match prepared_patterns {
+        Some((required, _)) => check_required_prepared(data, required)?,
+        None => check_required(data, settings)?,
+    };
+    if required && speed_mode {
         return Ok(Some(true));
     }
-    if check_exclude(data, settings, failed_keys)? && speed_mode {
+    let excluded = match prepared_patterns {
+        Some((_, excluded)) => check_exclude_prepared(data, excluded, failed_keys)?,
+        None => check_exclude(data, settings, failed_keys)?,
+    };
+    if excluded && speed_mode {
         return Ok(Some(false));
     }
     if language_handler(data, settings, failed_keys) && speed_mode {
@@ -776,14 +835,21 @@ fn run_fetch_pipeline(
     Ok(None)
 }
 
-pub fn check_fetch(
+fn check_fetch_impl(
     data: &Map<String, Value>,
     settings: &Value,
     speed_mode: bool,
+    prepared_patterns: Option<(&[PreparedPattern], &[PreparedPattern])>,
 ) -> Result<(bool, Vec<String>), RtnError> {
     let mut failed_keys = BTreeSet::new();
 
-    if let Some(fetchable) = run_fetch_pipeline(data, settings, &mut failed_keys, speed_mode)? {
+    if let Some(fetchable) = run_fetch_pipeline(
+        data,
+        settings,
+        &mut failed_keys,
+        speed_mode,
+        prepared_patterns,
+    )? {
         if fetchable {
             return Ok((true, Vec::new()));
         }
@@ -795,6 +861,14 @@ pub fn check_fetch(
     } else {
         Ok((false, failed_keys.into_iter().collect()))
     }
+}
+
+pub fn check_fetch(
+    data: &Map<String, Value>,
+    settings: &Value,
+    speed_mode: bool,
+) -> Result<(bool, Vec<String>), RtnError> {
+    check_fetch_impl(data, settings, speed_mode, None)
 }
 
 fn rank_model_value(rank_model: &Value, key: &str) -> i64 {
@@ -831,6 +905,19 @@ pub fn calculate_preferred(data: &Map<String, Value>, settings: &Value) -> Resul
     } else {
         0
     })
+}
+
+fn calculate_preferred_prepared(
+    data: &Map<String, Value>,
+    patterns: &[PreparedPattern],
+) -> Result<i64, RtnError> {
+    Ok(
+        if matches_prepared(patterns, map_str(data, "raw_title").unwrap_or_default())? {
+            10_000
+        } else {
+            0
+        },
+    )
 }
 
 pub fn calculate_preferred_langs(data: &Map<String, Value>, settings: &Value) -> i64 {
@@ -961,6 +1048,15 @@ pub fn get_rank(
     settings: &Value,
     rank_model: &Value,
 ) -> Result<i64, RtnError> {
+    get_rank_impl(data, settings, rank_model, None)
+}
+
+fn get_rank_impl(
+    data: &Map<String, Value>,
+    settings: &Value,
+    rank_model: &Value,
+    preferred_patterns: Option<&[PreparedPattern]>,
+) -> Result<i64, RtnError> {
     if map_str(data, "raw_title").unwrap_or_default().is_empty() {
         return Err(RtnError::InvalidInput(
             "Parsed data cannot be empty.".to_string(),
@@ -974,9 +1070,37 @@ pub fn get_rank(
     rank += calculate_audio_rank(data, settings, rank_model);
     rank += calculate_codec_rank(data, settings, rank_model);
     rank += calculate_extra_ranks(data, settings, rank_model);
-    rank += calculate_preferred(data, settings)?;
+    rank += match preferred_patterns {
+        Some(patterns) => calculate_preferred_prepared(data, patterns)?,
+        None => calculate_preferred(data, settings)?,
+    };
     rank += calculate_preferred_langs(data, settings);
     Ok(rank)
+}
+
+pub fn check_fetch_and_rank_many(
+    data_items: &[Map<String, Value>],
+    settings: &Value,
+    rank_model: &Value,
+    speed_mode: bool,
+) -> Result<Vec<(bool, Vec<String>, i64)>, RtnError> {
+    let required_patterns = prepare_patterns(settings_value_array(settings, "require"))?;
+    let excluded_patterns = prepare_patterns(settings_value_array(settings, "exclude"))?;
+    let preferred_patterns = prepare_patterns(settings_value_array(settings, "preferred"))?;
+
+    data_items
+        .iter()
+        .map(|data| {
+            let (fetchable, failed_keys) = check_fetch_impl(
+                data,
+                settings,
+                speed_mode,
+                Some((&required_patterns, &excluded_patterns)),
+            )?;
+            let rank = get_rank_impl(data, settings, rank_model, Some(&preferred_patterns))?;
+            Ok((fetchable, failed_keys, rank))
+        })
+        .collect()
 }
 
 pub fn parse_json_object(raw: &str, field_name: &str) -> Result<Map<String, Value>, RtnError> {
