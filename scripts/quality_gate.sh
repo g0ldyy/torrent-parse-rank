@@ -21,25 +21,28 @@ if ! uv run ruff --version >/dev/null 2>&1; then
   exit 2
 fi
 
-echo "[1/6] Rust fmt check"
+echo "[1/7] Rust fmt check"
 cargo fmt --all -- --check
 
-echo "[2/6] Rust clippy"
+echo "[2/7] Rust clippy"
 cargo clippy --all-targets --all-features -- -D warnings
 
-echo "[3/6] Rust check"
+echo "[3/7] Rust check"
 cargo check -q
 
-echo "[4/6] Python format + lint"
+echo "[4/7] Python format + lint"
 uv run ruff format --check python scripts parity_tests/local
 uv run ruff check python scripts parity_tests/local
 
-echo "[5/6] Local API tests"
+echo "[5/7] Build release native extension"
+uv run maturin develop --release
+
+echo "[6/7] Local API tests"
 uv run pytest -q parity_tests/local/test_api_surface.py
 
 if [[ "${FULL}" -eq 1 ]]; then
-  echo "[6/6] Full parity tests (upstream fetched on main)"
+  echo "[7/7] Full parity tests (upstream fetched on main)"
   uv run ./scripts/run_parity_tests.sh
 else
-  echo "[6/6] Skipped upstream parity tests (pass --full to enable)"
+  echo "[7/7] Skipped upstream parity tests (pass --full to enable)"
 fi

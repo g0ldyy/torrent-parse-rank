@@ -97,6 +97,7 @@ cd torrent-parse-rank
 ```
 
 `--full` includes upstream parity tests.
+Both variants rebuild the optimized native extension before running Python tests.
 
 ## Benchmarks
 
