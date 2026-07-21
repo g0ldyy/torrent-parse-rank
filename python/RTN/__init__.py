@@ -14,7 +14,7 @@ from .extras import (
     sort_torrents,
     title_match,
 )
-from .fetch import check_fetch
+from .fetch import check_fetch, check_fetch_and_rank
 from .file_parser import AudioTrack, MediaMetadata, SubtitleTrack, VideoTrack, parse_media_file
 from .models import BaseRankingModel, DefaultRanking, ParsedData, SettingsModel
 from .parser import RTN, Torrent, parse
@@ -46,6 +46,7 @@ __all__ = [
     "sort_torrents",
     "get_rank",
     "check_fetch",
+    "check_fetch_and_rank",
     "extract_seasons",
     "extract_episodes",
     "episodes_from_season",

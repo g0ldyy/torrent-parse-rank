@@ -6,6 +6,7 @@ from torrent_parse_rank_native._native import (
     rtn_adult_handler,
     rtn_check_exclude,
     rtn_check_fetch,
+    rtn_check_fetch_and_rank,
     rtn_check_required,
     rtn_fetch_audio,
     rtn_fetch_codec,
@@ -18,8 +19,8 @@ from torrent_parse_rank_native._native import (
     rtn_trash_handler,
 )
 
-from ._native_bridge import data_settings_to_json, settings_to_json
-from .models import ParsedData, SettingsModel
+from ._native_bridge import data_settings_rank_to_json, data_settings_to_json, settings_to_json
+from .models import BaseRankingModel, ParsedData, SettingsModel
 
 ANIME = {"ja", "zh", "ko"}
 NON_ANIME = {
@@ -105,6 +106,24 @@ def check_fetch(
 
     data_json, settings_json = _native_payload(data, settings)
     return rtn_check_fetch(data_json, settings_json, speed_mode)
+
+
+def check_fetch_and_rank(
+    data: ParsedData,
+    settings: SettingsModel,
+    rank_model: BaseRankingModel,
+    speed_mode: bool = True,
+) -> tuple[bool, list[str], int]:
+    """Apply fetch filters and ranking with one Python/Rust boundary crossing."""
+    if not isinstance(data, ParsedData):
+        raise TypeError("Parsed data must be an instance of ParsedData.")
+    if not isinstance(settings, SettingsModel):
+        raise TypeError("Settings must be an instance of SettingsModel.")
+    if not isinstance(rank_model, BaseRankingModel):
+        raise TypeError("Rank model must be an instance of BaseRankingModel.")
+
+    payload = data_settings_rank_to_json(data, settings, rank_model)
+    return rtn_check_fetch_and_rank(*payload, speed_mode)
 
 
 def populate_langs(settings: SettingsModel) -> None:

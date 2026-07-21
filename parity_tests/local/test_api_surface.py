@@ -2,6 +2,8 @@ from pathlib import Path
 
 import PTT
 from PTT import adult, anime, cli, handlers, parse, transformers
+from RTN import DefaultRanking, SettingsModel, check_fetch, check_fetch_and_rank, get_rank
+from RTN import parse as rtn_parse
 
 
 def test_api_modules_and_symbols_present():
@@ -92,3 +94,14 @@ def test_adult_keyword_loading_and_helpers(tmp_path: Path):
     source.write_text("z\na\na\n", encoding="utf-8")
     cli.dedupe_and_sort(str(source))
     assert source.read_text(encoding="utf-8").splitlines() == ["a", "z"]
+
+
+def test_combined_fetch_and_rank_matches_individual_calls():
+    data = rtn_parse("Oppenheimer.2023.2160p.REMUX.DV.HDR10Plus.TrueHD.7.1.HEVC")
+    settings = SettingsModel()
+    ranking = DefaultRanking()
+
+    fetchable, failed_keys, rank = check_fetch_and_rank(data, settings, ranking)
+
+    assert (fetchable, failed_keys) == check_fetch(data, settings)
+    assert rank == get_rank(data, settings, ranking)
