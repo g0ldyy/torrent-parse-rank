@@ -19,6 +19,11 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci-quality
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -26,12 +31,15 @@ jobs:
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
 
       - name: Sync Python dev dependencies
         env:
           PCRE2_SYS_STATIC: "1"
         run: |
-          uv sync --group dev
+          uv sync --group dev --no-install-project
 
       - name: Quality gate (full)
         env:
