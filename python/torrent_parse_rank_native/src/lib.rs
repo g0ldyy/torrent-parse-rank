@@ -259,6 +259,30 @@ fn rtn_check_fetch_and_rank(
     Ok((fetch, failed_keys, rank))
 }
 
+#[pyfunction]
+#[pyo3(signature = (data_jsons, settings_json, rank_model_json, speed_mode=true))]
+fn rtn_check_fetch_and_rank_many(
+    data_jsons: Vec<String>,
+    settings_json: &str,
+    rank_model_json: &str,
+    speed_mode: bool,
+) -> PyResult<Vec<(bool, Vec<String>, i64)>> {
+    let settings = parse_json_value(settings_json, "settings_json").map_err(to_py_value_error)?;
+    let rank_model =
+        parse_json_value(rank_model_json, "rank_model_json").map_err(to_py_value_error)?;
+
+    data_jsons
+        .iter()
+        .map(|data_json| {
+            let data = parse_json_object(data_json, "data_json").map_err(to_py_value_error)?;
+            let (fetch, failed_keys) =
+                check_fetch(&data, &settings, speed_mode).map_err(to_py_value_error)?;
+            let rank = get_rank(&data, &settings, &rank_model).map_err(to_py_value_error)?;
+            Ok((fetch, failed_keys, rank))
+        })
+        .collect()
+}
+
 wrap_failed_bool_fn!(rtn_trash_handler, trash_handler);
 wrap_failed_bool_fn!(rtn_adult_handler, adult_handler);
 wrap_failed_bool_fn!(rtn_language_handler, language_handler);
@@ -333,6 +357,7 @@ fn _native(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     m.add_function(wrap_pyfunction!(rtn_check_fetch, m)?)?;
     m.add_function(wrap_pyfunction!(rtn_check_fetch_and_rank, m)?)?;
+    m.add_function(wrap_pyfunction!(rtn_check_fetch_and_rank_many, m)?)?;
     m.add_function(wrap_pyfunction!(rtn_trash_handler, m)?)?;
     m.add_function(wrap_pyfunction!(rtn_adult_handler, m)?)?;
     m.add_function(wrap_pyfunction!(rtn_language_handler, m)?)?;

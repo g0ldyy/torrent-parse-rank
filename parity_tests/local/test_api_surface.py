@@ -2,7 +2,14 @@ from pathlib import Path
 
 import PTT
 from PTT import adult, anime, cli, handlers, parse, transformers
-from RTN import DefaultRanking, SettingsModel, check_fetch, check_fetch_and_rank, get_rank
+from RTN import (
+    DefaultRanking,
+    SettingsModel,
+    check_fetch,
+    check_fetch_and_rank,
+    check_fetch_and_rank_many,
+    get_rank,
+)
 from RTN import parse as rtn_parse
 
 
@@ -105,3 +112,19 @@ def test_combined_fetch_and_rank_matches_individual_calls():
 
     assert (fetchable, failed_keys) == check_fetch(data, settings)
     assert rank == get_rank(data, settings, ranking)
+
+
+def test_batched_fetch_and_rank_matches_single_calls():
+    data_items = [
+        rtn_parse("The.Matrix.1999.1080p.BluRay.x264.DTS"),
+        rtn_parse("Some.Movie.2020.CAM.XVID.MP3"),
+        rtn_parse("Show.S02E03.2160p.WEB-DL.DV.HDR.HEVC"),
+    ]
+    settings = SettingsModel()
+    ranking = DefaultRanking()
+
+    actual = check_fetch_and_rank_many(data_items, settings, ranking)
+    expected = [check_fetch_and_rank(data, settings, ranking) for data in data_items]
+
+    assert actual == expected
+    assert check_fetch_and_rank_many([], settings, ranking) == []

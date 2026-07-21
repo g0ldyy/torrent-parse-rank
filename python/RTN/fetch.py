@@ -1,12 +1,13 @@
 """Functions to determine if a torrent should be fetched based on user settings."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 
 from torrent_parse_rank_native._native import (
     rtn_adult_handler,
     rtn_check_exclude,
     rtn_check_fetch,
     rtn_check_fetch_and_rank,
+    rtn_check_fetch_and_rank_many,
     rtn_check_required,
     rtn_fetch_audio,
     rtn_fetch_codec,
@@ -19,7 +20,13 @@ from torrent_parse_rank_native._native import (
     rtn_trash_handler,
 )
 
-from ._native_bridge import data_settings_rank_to_json, data_settings_to_json, settings_to_json
+from ._native_bridge import (
+    data_settings_rank_to_json,
+    data_settings_to_json,
+    data_to_json,
+    rank_model_to_json,
+    settings_to_json,
+)
 from .models import BaseRankingModel, ParsedData, SettingsModel
 
 ANIME = {"ja", "zh", "ko"}
@@ -124,6 +131,35 @@ def check_fetch_and_rank(
 
     payload = data_settings_rank_to_json(data, settings, rank_model)
     return rtn_check_fetch_and_rank(*payload, speed_mode)
+
+
+def check_fetch_and_rank_many(
+    data_items: Iterable[ParsedData],
+    settings: SettingsModel,
+    rank_model: BaseRankingModel,
+    speed_mode: bool = True,
+) -> list[tuple[bool, list[str], int]]:
+    """Apply shared fetch filters and ranking to parsed items in one native batch."""
+    if not isinstance(settings, SettingsModel):
+        raise TypeError("Settings must be an instance of SettingsModel.")
+    if not isinstance(rank_model, BaseRankingModel):
+        raise TypeError("Rank model must be an instance of BaseRankingModel.")
+
+    data_jsons = []
+    for data in data_items:
+        if not isinstance(data, ParsedData):
+            raise TypeError("Parsed data must be an instance of ParsedData.")
+        data_jsons.append(data_to_json(data))
+
+    if not data_jsons:
+        return []
+
+    return rtn_check_fetch_and_rank_many(
+        data_jsons,
+        settings_to_json(settings),
+        rank_model_to_json(rank_model),
+        speed_mode,
+    )
 
 
 def populate_langs(settings: SettingsModel) -> None:
