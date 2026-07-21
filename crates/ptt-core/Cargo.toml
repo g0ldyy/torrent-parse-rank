@@ -9,7 +9,6 @@ homepage.workspace = true
 repository.workspace = true
 
 [dependencies]
-anyhow.workspace = true
 chrono.workspace = true
 fancy-regex.workspace = true
 once_cell.workspace = true

@@ -1,6 +1,5 @@
 use std::collections::{HashMap, HashSet};
 
-use anyhow::Context;
 use chrono::NaiveDate;
 use fancy_regex::Regex;
 use once_cell::sync::Lazy;
@@ -296,8 +295,7 @@ impl ParserEngine {
                 "regex" => {
                     let pat = raw
                         .pattern
-                        .context("missing pattern")
-                        .map_err(|e| ParseError::Data(e.to_string()))?;
+                        .ok_or_else(|| ParseError::Data("missing pattern".to_owned()))?;
                     let ignore_case = (raw.flags.unwrap_or(0) & 2) != 0;
                     RuntimeHandlerKind::Regex(compile_regex(&pat, ignore_case)?)
                 }
