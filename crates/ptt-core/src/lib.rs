@@ -117,6 +117,7 @@ fn compile_regex(pattern: &str, ignore_case: bool) -> Result<PcreRegex, ParseErr
     builder.utf(true);
     builder.ucp(true);
     builder.caseless(ignore_case);
+    builder.jit(true);
     match builder.build(&normalized_pattern) {
         Ok(re) => Ok(re),
         Err(first_err) => {
@@ -165,7 +166,8 @@ fn normalize_pattern_for_pcre2(pattern: &str) -> String {
         }
         out.push(c);
     }
-    out
+    out.replace(r"\[?\]?", r"(?:\[\]?)?")
+        .replace(r"[\])?]?", r"(?:\]|\)|\?)?")
 }
 
 fn simplify_pattern_for_pcre2(pattern: &str) -> Option<String> {
