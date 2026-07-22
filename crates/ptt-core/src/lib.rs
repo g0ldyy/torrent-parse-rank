@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 
 use aho_corasick::AhoCorasick;
@@ -1047,28 +1048,36 @@ fn convert_months(input: &str) -> String {
     out
 }
 
+fn replace_all_in_place(text: &mut String, regex: &Regex, replacement: &str) {
+    if let Cow::Owned(replaced) = regex.replace_all(text, replacement) {
+        *text = replaced;
+    }
+}
+
+fn replace_in_place(text: &mut String, regex: &Regex, replacement: &str) {
+    if let Cow::Owned(replaced) = regex.replace(text, replacement) {
+        *text = replaced;
+    }
+}
+
 fn clean_title(raw_title: &str) -> String {
     let mut cleaned = raw_title.replace('_', " ");
-    cleaned = MOVIE_REGEX.replace_all(&cleaned, "").to_string();
-    cleaned = NOT_ALLOWED_SYMBOLS_AT_START_AND_END
-        .replace_all(&cleaned, "")
-        .to_string();
-    cleaned = RUSSIAN_CAST_REGEX.replace_all(&cleaned, "").to_string();
-    cleaned = STAR_REGEX_1.replace(&cleaned, "$1").to_string();
-    cleaned = STAR_REGEX_2.replace(&cleaned, "$1").to_string();
-    cleaned = ALT_TITLES_REGEX.replace_all(&cleaned, "").to_string();
-    cleaned = NOT_ONLY_NON_ENGLISH_REGEX
-        .replace_all(&cleaned, "")
-        .to_string();
-    cleaned = REMAINING_NOT_ALLOWED_SYMBOLS_AT_START_AND_END
-        .replace_all(&cleaned, "")
-        .to_string();
-    cleaned = EMPTY_BRACKETS_REGEX.replace_all(&cleaned, "").to_string();
-    cleaned = MP3_REGEX.replace_all(&cleaned, "").to_string();
-    cleaned = PARANTHESES_WITHOUT_CONTENT
-        .replace_all(&cleaned, "")
-        .to_string();
-    cleaned = SPECIAL_CHAR_SPACING.replace_all(&cleaned, "").to_string();
+    replace_all_in_place(&mut cleaned, &MOVIE_REGEX, "");
+    replace_all_in_place(&mut cleaned, &NOT_ALLOWED_SYMBOLS_AT_START_AND_END, "");
+    replace_all_in_place(&mut cleaned, &RUSSIAN_CAST_REGEX, "");
+    replace_in_place(&mut cleaned, &STAR_REGEX_1, "$1");
+    replace_in_place(&mut cleaned, &STAR_REGEX_2, "$1");
+    replace_all_in_place(&mut cleaned, &ALT_TITLES_REGEX, "");
+    replace_all_in_place(&mut cleaned, &NOT_ONLY_NON_ENGLISH_REGEX, "");
+    replace_all_in_place(
+        &mut cleaned,
+        &REMAINING_NOT_ALLOWED_SYMBOLS_AT_START_AND_END,
+        "",
+    );
+    replace_all_in_place(&mut cleaned, &EMPTY_BRACKETS_REGEX, "");
+    replace_all_in_place(&mut cleaned, &MP3_REGEX, "");
+    replace_all_in_place(&mut cleaned, &PARANTHESES_WITHOUT_CONTENT, "");
+    replace_all_in_place(&mut cleaned, &SPECIAL_CHAR_SPACING, "");
 
     for (open, close) in [("{", "}"), ("[", "]"), ("(", ")")] {
         if cleaned.matches(open).count() != cleaned.matches(close).count() {
@@ -1092,10 +1101,8 @@ fn clean_title(raw_title: &str) -> String {
         }
     }
 
-    cleaned = REDUNDANT_SYMBOLS_AT_END
-        .replace_all(&cleaned, "")
-        .to_string();
-    cleaned = SPACING_REGEX.replace_all(&cleaned, " ").to_string();
+    replace_all_in_place(&mut cleaned, &REDUNDANT_SYMBOLS_AT_END, "");
+    replace_all_in_place(&mut cleaned, &SPACING_REGEX, " ");
     cleaned.trim().to_owned()
 }
 
