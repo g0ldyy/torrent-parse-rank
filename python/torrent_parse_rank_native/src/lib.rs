@@ -318,11 +318,13 @@ wrap_failed_bool_fn!(rtn_fetch_other, fetch_other);
 fn rtn_populate_langs(settings_json: &str) -> PyResult<(Vec<String>, Vec<String>, Vec<String>)> {
     let settings = parse_json_value(settings_json, "settings_json").map_err(to_py_value_error)?;
     let (exclude, required, allowed) = populate_lang_sets(&settings);
-    Ok((
-        exclude.into_iter().collect(),
-        required.into_iter().collect(),
-        allowed.into_iter().collect(),
-    ))
+    let mut exclude: Vec<_> = exclude.into_iter().collect();
+    let mut required: Vec<_> = required.into_iter().collect();
+    let mut allowed: Vec<_> = allowed.into_iter().collect();
+    exclude.sort_unstable();
+    required.sort_unstable();
+    allowed.sort_unstable();
+    Ok((exclude, required, allowed))
 }
 
 #[pyfunction]

@@ -18,6 +18,8 @@ from RTN import (
     title_match,
 )
 from RTN import parse as rtn_parse
+from RTN.fetch import populate_langs
+from RTN.models import LanguagesConfig
 from RTN.patterns import _compile_patterns
 
 
@@ -241,3 +243,20 @@ def test_title_similarity_rejects_boolean_threshold():
 def test_episode_extraction_rejects_boolean_season():
     with pytest.raises(TypeError, match="positive integer"):
         episodes_from_season("Show.S01E01", True)
+
+
+def test_populated_language_groups_are_deterministically_ordered():
+    settings = SettingsModel(
+        languages=LanguagesConfig(
+            exclude=["anime"],
+            required=["common"],
+            allowed=["fr", "anime"],
+        )
+    )
+
+    populate_langs(settings)
+
+    assert settings.languages.exclude == sorted(settings.languages.exclude)
+    assert settings.languages.required == sorted(settings.languages.required)
+    assert settings.languages.allowed == sorted(settings.languages.allowed)
+    assert {"anime", "ja", "zh", "ko"} <= set(settings.languages.exclude)
