@@ -59,6 +59,13 @@ def test_parse_module_symbols_present():
         assert hasattr(parse, name), f"missing parse symbol: {name}"
 
 
+def test_public_ptt_regex_constants_keep_upstream_semantics():
+    assert parse.RUSSIAN_CAST_REGEX.search("Title (Русский)")
+    assert not parse.RUSSIAN_CAST_REGEX.search("plain title")
+    assert parse.NOT_ONLY_NON_ENGLISH_REGEX.search("English Русский текст")
+    assert not parse.NOT_ONLY_NON_ENGLISH_REGEX.search("plain title")
+
+
 def test_transformers_symbols_present():
     for name in [
         "none",

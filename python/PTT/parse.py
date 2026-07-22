@@ -1,9 +1,8 @@
 import inspect
-import re
-import warnings
 from collections.abc import Callable
 from typing import Any
 
+import regex
 from torrent_parse_rank_native import (
     ptt_clean_title,
     ptt_languages_translation_table,
@@ -33,39 +32,29 @@ PARENTHESES = ["(", ")"]
 BRACKETS = [CURLY_BRACKETS, SQUARE_BRACKETS, PARENTHESES]
 
 
-def _safe_compile(pattern: str, flags: int = 0) -> re.Pattern[str]:
-    try:
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", FutureWarning)
-            return re.compile(pattern, flags)
-    except (re.error, FutureWarning):
-        # Compatibility constant fallback for patterns only supported by the `regex` package.
-        return re.compile(r"(?:)")
-
-
-RUSSIAN_CAST_REGEX = _safe_compile(r"\([^)]*[\u0400-\u04ff][^)]*\)$|(?<=\/.*)\(.*\)$")
-ALT_TITLES_REGEX = _safe_compile(
+RUSSIAN_CAST_REGEX = regex.compile(r"\([^)]*[\u0400-\u04ff][^)]*\)$|(?<=\/.*)\(.*\)$")
+ALT_TITLES_REGEX = regex.compile(
     rf"[^/|(]*[{NON_ENGLISH_CHARS}][^/|]*[/|]|[/|][^/|(]*[{NON_ENGLISH_CHARS}][^/|]*"
 )
-NOT_ONLY_NON_ENGLISH_REGEX = _safe_compile(
+NOT_ONLY_NON_ENGLISH_REGEX = regex.compile(
     rf"(?<=[a-zA-Z][^{NON_ENGLISH_CHARS}]+)[{NON_ENGLISH_CHARS}].*[{NON_ENGLISH_CHARS}]|[{NON_ENGLISH_CHARS}].*[{NON_ENGLISH_CHARS}](?=[^{NON_ENGLISH_CHARS}]+[a-zA-Z])"
 )
-NOT_ALLOWED_SYMBOLS_AT_START_AND_END = _safe_compile(
+NOT_ALLOWED_SYMBOLS_AT_START_AND_END = regex.compile(
     rf"^[^\w{NON_ENGLISH_CHARS}#[【★]+|[ \-:/\\[|{{(#$&^]+$"
 )
-REMAINING_NOT_ALLOWED_SYMBOLS_AT_START_AND_END = _safe_compile(rf"^[^\w{NON_ENGLISH_CHARS}#]+|]$")
-REDUNDANT_SYMBOLS_AT_END = _safe_compile(r"[ \-:./\\]+$")
-EMPTY_BRACKETS_REGEX = _safe_compile(r"\(\s*\)|\[\s*\]|\{\s*\}")
-PARANTHESES_WITHOUT_CONTENT = _safe_compile(r"\(\W*\)|\[\W*\]|\{\W*\}")
-MOVIE_REGEX = _safe_compile(r"[[(]movie[)\]]", flags=re.IGNORECASE)
-STAR_REGEX_1 = _safe_compile(r"^[[【★].*[\]】★][ .]?(.+)")
-STAR_REGEX_2 = _safe_compile(r"(.+)[ .]?[[【★].*[\]】★]$")
-MP3_REGEX = _safe_compile(r"\bmp3$")
-SPACING_REGEX = _safe_compile(r"\s+")
-SPECIAL_CHAR_SPACING = _safe_compile(r"[\-\+\_\{\}\[\]]\W{2,}")
-SUB_PATTERN = _safe_compile(r"_+")
+REMAINING_NOT_ALLOWED_SYMBOLS_AT_START_AND_END = regex.compile(rf"^[^\w{NON_ENGLISH_CHARS}#]+|]$")
+REDUNDANT_SYMBOLS_AT_END = regex.compile(r"[ \-:./\\]+$")
+EMPTY_BRACKETS_REGEX = regex.compile(r"\(\s*\)|\[\s*\]|\{\s*\}")
+PARANTHESES_WITHOUT_CONTENT = regex.compile(r"\(\W*\)|\[\W*\]|\{\W*\}")
+MOVIE_REGEX = regex.compile(r"[[(]movie[)\]]", flags=regex.IGNORECASE)
+STAR_REGEX_1 = regex.compile(r"^[[【★].*[\]】★][ .]?(.+)")
+STAR_REGEX_2 = regex.compile(r"(.+)[ .]?[[【★].*[\]】★]$")
+MP3_REGEX = regex.compile(r"\bmp3$")
+SPACING_REGEX = regex.compile(r"\s+")
+SPECIAL_CHAR_SPACING = regex.compile(r"[\-\+\_\{\}\[\]]\W{2,}")
+SUB_PATTERN = regex.compile(r"_+")
 
-BEFORE_TITLE_MATCH_REGEX = _safe_compile(r"^\[([^[\]]+)]")
+BEFORE_TITLE_MATCH_REGEX = regex.compile(r"^\[([^[\]]+)]")
 
 DEBUG_HANDLER = False
 
