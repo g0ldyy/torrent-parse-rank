@@ -66,6 +66,8 @@ def _validate_season_number(season_num: int) -> None:
 
 
 def get_resolution(torrent: Torrent) -> Resolution:
+    if not isinstance(torrent, Torrent):
+        raise TypeError("Torrent must be an instance of Torrent.")
     return RESOLUTION_MAP.get(torrent.data.resolution.lower(), Resolution.UNKNOWN)
 
 
@@ -73,7 +75,7 @@ def title_match(
     correct_title: str,
     parsed_title: str,
     threshold: float = 0.85,
-    aliases: dict | None = None,
+    aliases: dict[str, list[str]] | None = None,
 ) -> bool:
     _validate_similarity_inputs(correct_title, parsed_title, threshold)
     return rtn_title_match(correct_title, parsed_title, threshold, aliases_to_json(aliases))
@@ -83,7 +85,7 @@ def get_lev_ratio(
     correct_title: str,
     parsed_title: str,
     threshold: float = 0.85,
-    aliases: dict | None = None,
+    aliases: dict[str, list[str]] | None = None,
 ) -> float:
     _validate_similarity_inputs(correct_title, parsed_title, threshold)
     return rtn_get_lev_ratio(correct_title, parsed_title, threshold, aliases_to_json(aliases))

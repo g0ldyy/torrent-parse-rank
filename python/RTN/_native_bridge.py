@@ -63,9 +63,23 @@ def data_settings_rank_to_json(data: Any, settings: Any, rank_model: Any) -> tup
     return data_json, settings_json, rank_model_to_json(rank_model)
 
 
-def aliases_to_json(aliases: dict | None) -> str:
+def _validate_aliases(aliases: dict[str, list[str]] | None) -> None:
+    if aliases is None:
+        return
+    if type(aliases) is not dict:
+        raise TypeError("Aliases must be a dictionary or None.")
+    if any(
+        type(key) is not str
+        or not key
+        or type(values) is not list
+        or any(type(value) is not str or not value for value in values)
+        for key, values in aliases.items()
+    ):
+        raise TypeError("Aliases must map non-empty strings to lists of non-empty strings.")
+
+
+def aliases_to_json(aliases: dict[str, list[str]] | None) -> str:
+    _validate_aliases(aliases)
     if aliases is None:
         return _EMPTY_OBJECT_JSON
-    if not isinstance(aliases, dict):
-        raise TypeError("Aliases must be a dictionary or None.")
     return _dumps(aliases)

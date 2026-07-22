@@ -7,6 +7,7 @@ import regex
 from PTT import adult, anime, cli, handlers, parse, transformers
 from pydantic_core import PydanticSerializationError
 from RTN import (
+    RTN,
     BaseRankingModel,
     DefaultRanking,
     ParsedData,
@@ -20,6 +21,7 @@ from RTN import (
     episodes_from_season,
     get_lev_ratio,
     get_rank,
+    get_resolution,
     normalize_title,
     sort_torrents,
     title_match,
@@ -242,6 +244,10 @@ def test_native_json_boundaries_require_current_object_roots_and_titles():
     for call in invalid_calls:
         with pytest.raises(ValueError):
             call()
+
+    for native_similarity in (_native.rtn_get_lev_ratio, _native.rtn_title_match):
+        with pytest.raises(ValueError, match="Aliases must map"):
+            native_similarity("Title", "Title", 0.85, '{"en":"Title"}')
 
 
 def test_parsed_data_uses_one_strict_current_schema():
@@ -487,6 +493,21 @@ def test_title_similarity_rejects_boolean_threshold():
         title_match("Title", "Title", threshold=True)
 
 
+@pytest.mark.parametrize(
+    "aliases",
+    [
+        {"": ["Title"]},
+        {"en": "Title"},
+        {"en": [""]},
+        {"en": [1]},
+        {1: ["Title"]},
+    ],
+)
+def test_title_similarity_rejects_non_current_alias_entries(aliases):
+    with pytest.raises(TypeError, match="Aliases must map"):
+        get_lev_ratio("Title", "Title", aliases=aliases)
+
+
 def test_episode_extraction_rejects_boolean_season():
     with pytest.raises(TypeError, match="positive integer"):
         episodes_from_season("Show.S01E01", True)
@@ -520,6 +541,37 @@ def test_sort_torrents_breaks_equal_rank_ties_deterministically():
     }
 
     assert list(sort_torrents(torrents)) == ["c" * 40, "b" * 40, "a" * 40]
+
+
+def test_parser_entry_points_enforce_current_controls_and_models():
+    settings = SettingsModel()
+    ranking = DefaultRanking()
+    rtn = RTN(settings, ranking)
+
+    with pytest.raises(TypeError, match="Settings"):
+        RTN(object())
+    with pytest.raises(TypeError, match="Rank model"):
+        RTN(settings, object())
+    with pytest.raises(TypeError, match="Torrent"):
+        get_resolution(object())
+
+    for flag_name in ("translate_langs", "json"):
+        with pytest.raises(TypeError):
+            parse_kwargs = {flag_name: 1}
+            rtn_parse("Movie.2026", **parse_kwargs)
+
+    rank_args = ("Movie.2026.1080p", "a" * 40)
+    for rank_kwargs in (
+        {"correct_title": False},
+        {"remove_trash": 1},
+        {"speed_mode": 1},
+        {"aliases": {"en": "Movie"}},
+    ):
+        with pytest.raises(TypeError):
+            rtn.rank(*rank_args, **rank_kwargs)
+
+    with pytest.raises(TypeError):
+        rtn.rank(*rank_args, legacy=True)
 
 
 def test_direct_model_json_matches_current_native_payloads():

@@ -446,6 +446,18 @@ pub fn get_lev_ratio(
             "Both titles must be provided.".to_string(),
         ));
     }
+    if aliases.iter().any(|(key, values)| {
+        key.is_empty()
+            || values.as_array().is_none_or(|values| {
+                values
+                    .iter()
+                    .any(|value| value.as_str().is_none_or(str::is_empty))
+            })
+    }) {
+        return Err(RtnError::InvalidInput(
+            "Aliases must map non-empty strings to arrays of non-empty strings.".to_string(),
+        ));
+    }
     if !(0.0..=1.0).contains(&threshold) {
         return Err(RtnError::InvalidInput(
             "The threshold must be a number between 0 and 1.".to_string(),
