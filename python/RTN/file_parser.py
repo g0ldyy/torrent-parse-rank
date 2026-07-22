@@ -5,6 +5,8 @@ from pathlib import Path
 import orjson
 from pydantic import BaseModel, Field
 
+FFPROBE_TIMEOUT_SECONDS = 30
+
 
 class VideoTrack(BaseModel):
     """Model representing video track metadata"""
@@ -57,16 +59,53 @@ class MediaMetadata(BaseModel):
 
 
 def _stream_language(stream: dict) -> str:
-    return stream.get("tags", {}).get("language") or ""
+    tags = stream.get("tags")
+    if not isinstance(tags, dict):
+        return ""
+    language = tags.get("language")
+    return language if isinstance(language, str) else ""
 
 
-def _parse_frame_rate(frame_rate: str) -> float:
-    try:
-        if "/" in frame_rate:
-            return float(Fraction(frame_rate))
-        return float(frame_rate)
-    except (ValueError, ZeroDivisionError):
+def _parse_frame_rate(frame_rate: object) -> float:
+    if not isinstance(frame_rate, (str, int, float)):
         return 0.0
+    try:
+        frame_rate_text = str(frame_rate)
+        if "/" in frame_rate_text:
+            return float(Fraction(frame_rate_text))
+        return float(frame_rate_text)
+    except (TypeError, ValueError, ZeroDivisionError):
+        return 0.0
+
+
+def _safe_int(value: object, default: int = 0) -> int:
+    try:
+        if value is None or isinstance(value, bool):
+            return default
+        return int(value)
+    except (TypeError, ValueError, OverflowError):
+        return default
+
+
+def _safe_float(value: object, default: float = 0.0) -> float:
+    try:
+        if value is None or isinstance(value, bool):
+            return default
+        return float(value)
+    except (TypeError, ValueError, OverflowError):
+        return default
+
+
+def _stream_is_attached_picture(stream: dict) -> bool:
+    disposition = stream.get("disposition")
+    return isinstance(disposition, dict) and bool(disposition.get("attached_pic"))
+
+
+def _video_priority(stream: dict) -> tuple[bool, int]:
+    disposition = stream.get("disposition")
+    is_default = isinstance(disposition, dict) and bool(disposition.get("default"))
+    area = _safe_int(stream.get("width")) * _safe_int(stream.get("height"))
+    return is_default, area
 
 
 def parse_media_file(file_path: str | Path) -> MediaMetadata:
@@ -81,7 +120,8 @@ def parse_media_file(file_path: str | Path) -> MediaMetadata:
 
     Raises:
         FileNotFoundError: If the file doesn't exist
-        subprocess.CalledProcessError: If ffprobe returns an error
+        RuntimeError: If ffprobe returns an error
+        TimeoutError: If ffprobe does not finish within 30 seconds
     """
     path = Path(file_path)
     if not path.exists():
@@ -90,7 +130,7 @@ def parse_media_file(file_path: str | Path) -> MediaMetadata:
     cmd = [
         "ffprobe",
         "-v",
-        "quiet",
+        "error",
         "-print_format",
         "json",
         "-show_format",
@@ -99,47 +139,71 @@ def parse_media_file(file_path: str | Path) -> MediaMetadata:
     ]
 
     try:
-        result = subprocess.check_output(cmd, text=True)
+        result = subprocess.run(
+            cmd,
+            check=True,
+            capture_output=True,
+            timeout=FFPROBE_TIMEOUT_SECONDS,
+        )
     except FileNotFoundError as err:
         raise FileNotFoundError("Error: ffprobe not found. Ensure FFmpeg is installed.") from err
+    except subprocess.TimeoutExpired as err:
+        raise TimeoutError(
+            f"ffprobe timed out after {FFPROBE_TIMEOUT_SECONDS} seconds for {path}"
+        ) from err
     except subprocess.CalledProcessError as err:
-        raise RuntimeError(f"ffprobe error: {err}") from err
+        stderr = (err.stderr or b"").decode("utf-8", errors="replace").strip()
+        raise RuntimeError(f"ffprobe error: {stderr or err}") from err
 
-    probe_data = orjson.loads(result)
+    probe_data = orjson.loads(result.stdout)
+    if not isinstance(probe_data, dict):
+        raise ValueError("ffprobe returned a non-object JSON document")
     format_info = probe_data.get("format", {})
+    if not isinstance(format_info, dict):
+        format_info = {}
+    format_name = format_info.get("format_name")
 
     metadata_dict = {
         "filename": path.name,
-        "file_size": int(format_info.get("size", 0)),
-        "duration": round(float(format_info.get("duration", 0)), 2),
-        "format": format_info.get("format_name", "unknown").split(",")
-        if format_info.get("format_name")
-        else [],
-        "bitrate": int(format_info.get("bit_rate", 0)),
+        "file_size": _safe_int(format_info.get("size"), path.stat().st_size),
+        "duration": round(_safe_float(format_info.get("duration")), 2),
+        "format": format_name.split(",") if isinstance(format_name, str) else [],
+        "bitrate": _safe_int(format_info.get("bit_rate")),
     }
 
     audio_tracks: list[AudioTrack] = []
     subtitle_tracks: list[SubtitleTrack] = []
     video_data: VideoTrack | None = None
 
-    for stream in probe_data.get("streams", []):
+    streams = probe_data.get("streams", [])
+    if not isinstance(streams, list):
+        streams = []
+    selected_video_priority = (False, -1)
+    for stream in streams:
+        if not isinstance(stream, dict):
+            continue
         codec_type = stream.get("codec_type")
-        codec = stream.get("codec_name", "unknown")
+        codec_name = stream.get("codec_name")
+        codec = codec_name if isinstance(codec_name, str) else "unknown"
 
-        if codec_type == "video":
+        if codec_type == "video" and not _stream_is_attached_picture(stream):
+            priority = _video_priority(stream)
+            if video_data is not None and priority <= selected_video_priority:
+                continue
             fps = _parse_frame_rate(stream.get("r_frame_rate", "0/1"))
             video_data = VideoTrack(
                 codec=codec,
-                width=int(stream.get("width", 0)),
-                height=int(stream.get("height", 0)),
+                width=_safe_int(stream.get("width")),
+                height=_safe_int(stream.get("height")),
                 frame_rate=round(fps, 2),
             )
+            selected_video_priority = priority
         elif codec_type == "audio":
             audio_tracks.append(
                 AudioTrack(
                     codec=codec,
-                    channels=int(stream.get("channels", 0)),
-                    sample_rate=int(stream.get("sample_rate", 0)),
+                    channels=_safe_int(stream.get("channels")),
+                    sample_rate=_safe_int(stream.get("sample_rate")),
                     language=_stream_language(stream),
                 )
             )
