@@ -495,9 +495,33 @@ def test_check_pattern_reuses_compiled_native_patterns():
     assert cache.hits == 1
 
 
+@pytest.mark.parametrize("patterns", [None, (), "HDR", {"HDR"}])
+def test_check_pattern_rejects_non_list_roots(patterns):
+    with pytest.raises(TypeError, match="Patterns must be a list"):
+        check_pattern(patterns, "HDR")
+
+
+@pytest.mark.parametrize("raw_title", [None, 1, False, ["HDR"]])
+def test_check_pattern_rejects_non_string_titles(raw_title):
+    with pytest.raises(TypeError, match="Raw title must be a string"):
+        check_pattern(["HDR"], raw_title)
+
+
 def test_normalize_title_preserves_trimmed_and_untrimmed_results():
     assert normalize_title("The.Matrix") == "the matrix"
     assert normalize_title("  Amélie & Friends  ") == "amelie and friends"
+
+
+@pytest.mark.parametrize("raw_title", [None, 1, False, ["Title"]])
+def test_normalize_title_rejects_non_string_titles(raw_title):
+    with pytest.raises(TypeError, match="Raw title must be a string"):
+        normalize_title(raw_title)
+
+
+@pytest.mark.parametrize("lower", [None, 1, 0, "true"])
+def test_normalize_title_rejects_non_boolean_lower(lower):
+    with pytest.raises(TypeError, match="Lower must be a boolean"):
+        normalize_title("Title", lower=lower)
 
 
 @pytest.mark.parametrize("aliases", [[], "", False])

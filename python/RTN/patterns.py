@@ -11,6 +11,10 @@ translationTable: dict[str, Any] = {}
 
 
 def normalize_title(raw_title: str, lower: bool = True) -> str:
+    if type(raw_title) is not str:
+        raise TypeError("Raw title must be a string.")
+    if type(lower) is not bool:
+        raise TypeError("Lower must be a boolean.")
     return rtn_normalize_title(raw_title, lower)
 
 
@@ -22,4 +26,8 @@ def _compile_patterns(
 
 
 def check_pattern(patterns: list, raw_title: str) -> bool:
+    if type(patterns) is not list:
+        raise TypeError("Patterns must be a list.")
+    if type(raw_title) is not str:
+        raise TypeError("Raw title must be a string.")
     return _compile_patterns(pattern_list_key(patterns)).is_match(raw_title)

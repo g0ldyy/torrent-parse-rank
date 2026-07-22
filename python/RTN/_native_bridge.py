@@ -24,6 +24,8 @@ def _serialize_pattern_item(item: Any) -> dict[str, Any] | None:
 
 
 def pattern_list_key(items: list[Any]) -> tuple[tuple[str, bool] | None, ...]:
+    if type(items) is not list:
+        raise TypeError("Patterns must be a list.")
     key = []
     for item in items:
         serialized = _serialize_pattern_item(item)
