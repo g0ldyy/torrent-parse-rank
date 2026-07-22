@@ -464,6 +464,9 @@ def test_parsed_data_uses_one_strict_current_schema():
 
     assert parsed._3d is True
     assert parsed.model_dump(mode="json", by_alias=True)["_3d"] is True
+    assert parsed.model_dump(mode="json")["_3d"] is True
+    assert ParsedData.model_validate(parsed.model_dump()) == parsed
+    assert rtn_parse("Movie.2026.3D", json=True)["_3d"] is True
 
     malformed = [
         {"raw_title": "Movie.2026", "title": "legacy intermediate"},

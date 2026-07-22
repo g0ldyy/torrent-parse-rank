@@ -117,7 +117,12 @@ class ParsedData(BaseModel):
     torrent: bool = False
     scene: bool = False
 
-    model_config = ConfigDict(extra="forbid", strict=True, validate_default=True)
+    model_config = ConfigDict(
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        serialize_by_alias=True,
+    )
 
     @field_validator("raw_title", mode="before")
     @classmethod
