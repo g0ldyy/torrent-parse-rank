@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import argparse
 import ast
 import json
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[2]
-HANDLERS_FILE = ROOT / "PTT" / "PTT" / "handlers.py"
-OUT_FILE = ROOT / "rust-port" / "crates" / "ptt-core" / "src" / "generated" / "handlers.json"
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_HANDLERS_FILE = ROOT / ".upstream-tests-cache" / "PTT" / "PTT" / "handlers.py"
+DEFAULT_OUT_FILE = ROOT / "crates" / "ptt-core" / "src" / "generated" / "handlers.json"
 
 
 def flags_from_compile_call(call: ast.Call) -> int:
@@ -50,15 +51,17 @@ def transform_spec(node: ast.AST | None) -> str:
     return ast.unparse(node)
 
 
-def main() -> None:
-    tree = ast.parse(HANDLERS_FILE.read_text(encoding="utf-8"))
+def extract_handlers(handlers_file: Path) -> dict[str, list[dict[str, Any]]]:
+    tree = ast.parse(handlers_file.read_text(encoding="utf-8"))
     handlers: list[dict[str, Any]] = []
+    add_handler_calls = 0
 
     for node in ast.walk(tree):
         if not isinstance(node, ast.Call):
             continue
         if not isinstance(node.func, ast.Attribute) or node.func.attr != "add_handler":
             continue
+        add_handler_calls += 1
 
         args = node.args
         if not args:
@@ -94,8 +97,10 @@ def main() -> None:
             if not isinstance(pattern_node, ast.Constant) or not isinstance(
                 pattern_node.value, str
             ):
-                # Skip non-literal regex patterns for now
-                continue
+                raise ValueError(
+                    f"Handler {hname!r} uses a non-literal regex pattern; "
+                    "the generator cannot preserve it safely."
+                )
             entry["kind"] = "regex"
             entry["pattern"] = pattern_node.value
             entry["flags"] = flags_from_compile_call(handler_node)
@@ -108,12 +113,59 @@ def main() -> None:
 
         handlers.append(entry)
 
-    OUT_FILE.parent.mkdir(parents=True, exist_ok=True)
-    OUT_FILE.write_text(
-        json.dumps({"handlers": handlers}, indent=2, ensure_ascii=False),
+    if len(handlers) != add_handler_calls:
+        raise ValueError(f"Extracted {len(handlers)} of {add_handler_calls} add_handler calls.")
+    return {"handlers": handlers}
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Generate Rust PTT handler data")
+    parser.add_argument(
+        "--source",
+        type=Path,
+        default=DEFAULT_HANDLERS_FILE,
+        help="Path to upstream PTT/PTT/handlers.py",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=DEFAULT_OUT_FILE,
+        help="Path to generated handlers.json",
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Fail when the existing output is not semantically current",
+    )
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    if not args.source.is_file():
+        raise FileNotFoundError(
+            f"PTT handler source not found: {args.source}. "
+            "Run scripts/fetch_upstream_tests.sh or pass --source."
+        )
+
+    payload = extract_handlers(args.source)
+    if args.check:
+        if not args.output.is_file():
+            raise FileNotFoundError(f"Generated handler file not found: {args.output}")
+        existing = json.loads(args.output.read_text(encoding="utf-8"))
+        if existing != payload:
+            raise SystemExit(
+                f"{args.output} is stale for {args.source}; regenerate without --check."
+            )
+        print(f"verified {args.output} with {len(payload['handlers'])} handlers")
+        return
+
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
-    print(f"wrote {OUT_FILE} with {len(handlers)} handlers")
+    print(f"wrote {args.output} with {len(payload['handlers'])} handlers")
 
 
 if __name__ == "__main__":

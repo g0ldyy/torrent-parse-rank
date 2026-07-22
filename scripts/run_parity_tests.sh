@@ -5,6 +5,9 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export PCRE2_SYS_STATIC="${PCRE2_SYS_STATIC:-1}"
 
 "${ROOT_DIR}/scripts/fetch_upstream_tests.sh"
+python "${ROOT_DIR}/scripts/extract_ptt_handlers.py" \
+  --source "${ROOT_DIR}/.upstream-tests-cache/PTT/PTT/handlers.py" \
+  --check
 
 FIXTURE="${ROOT_DIR}/parity_tests/upstream/rtn/video/[Yameii] Mushoku Tensei - Jobless Reincarnation - S02E15 [English Dub] [CR WEB-DL 1080p] [6CD6B5CA].mkv"
 if [[ ! -f "${FIXTURE}" ]]; then

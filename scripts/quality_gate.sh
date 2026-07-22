@@ -38,7 +38,7 @@ echo "[5/7] Build release native extension"
 uv run maturin develop --release
 
 echo "[6/7] Local API tests"
-uv run pytest -q parity_tests/local/test_api_surface.py
+uv run pytest -q parity_tests/local
 
 if [[ "${FULL}" -eq 1 ]]; then
   echo "[7/7] Full parity tests (upstream fetched on main)"
