@@ -1,3 +1,4 @@
+import math
 import subprocess
 from fractions import Fraction
 from pathlib import Path
@@ -72,9 +73,11 @@ def _parse_frame_rate(frame_rate: object) -> float:
     try:
         frame_rate_text = str(frame_rate)
         if "/" in frame_rate_text:
-            return float(Fraction(frame_rate_text))
-        return float(frame_rate_text)
-    except (TypeError, ValueError, ZeroDivisionError):
+            parsed = float(Fraction(frame_rate_text))
+        else:
+            parsed = float(frame_rate_text)
+        return parsed if math.isfinite(parsed) else 0.0
+    except (OverflowError, TypeError, ValueError, ZeroDivisionError):
         return 0.0
 
 
@@ -91,7 +94,8 @@ def _safe_float(value: object, default: float = 0.0) -> float:
     try:
         if value is None or isinstance(value, bool):
             return default
-        return float(value)
+        parsed = float(value)
+        return parsed if math.isfinite(parsed) else default
     except (TypeError, ValueError, OverflowError):
         return default
 
