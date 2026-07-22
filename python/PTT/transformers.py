@@ -5,43 +5,64 @@ from datetime import datetime
 MAX_EXPANDED_RANGE_ITEMS = 10_000
 
 
+def _require_string(value: str) -> str:
+    if type(value) is not str:
+        raise TypeError("transformer input must be a string")
+    return value
+
+
+def _require_scalar(value: str | int, field_name: str) -> str | int:
+    if type(value) not in (str, int):
+        raise TypeError(f"{field_name} must be a string or integer")
+    return value
+
+
 def none(input_value: str) -> str:
-    return input_value
+    return _require_string(input_value)
 
 
 def value(
     val: str | int | Callable[[str], str | int],
 ) -> Callable[[str], str | int]:
+    if type(val) not in (str, int) and not callable(val):
+        raise TypeError("transformer value must be a string, integer, or callable")
+
     def inner(input_value: str, existing_value: str | int | None = None) -> str | int:
-        if isinstance(val, str) and isinstance(input_value, str):
+        input_value = _require_string(input_value)
+        if existing_value is not None:
+            _require_scalar(existing_value, "existing value")
+        if isinstance(val, str):
             return val.replace("$1", input_value)
         if callable(val):
-            return val(input_value)
-        return val
+            return _require_scalar(val(input_value), "callable result")
+        return _require_scalar(val, "transformer value")
 
     return inner
 
 
 def integer(input_value: str) -> int | None:
+    input_value = _require_string(input_value)
     digits = re.sub(r"\D", "", input_value)
     return int(digits) if digits else None
 
 
 def first_integer(input_value: str) -> int | None:
+    input_value = _require_string(input_value)
     found = re.findall(r"\d+", input_value)
     return int(found[0]) if found else None
 
 
-def boolean(*args, **kwargs) -> bool:
+def boolean(input_value: str, existing_value=None) -> bool:
+    _require_string(input_value)
     return True
 
 
 def lowercase(input_value: str) -> str:
-    return input_value.lower()
+    return _require_string(input_value).lower()
 
 
 def uppercase(input_value: str) -> str:
-    return input_value.upper()
+    return _require_string(input_value).upper()
 
 
 month_mapping = {
@@ -65,6 +86,7 @@ MONTH_PATTERNS = [
 
 
 def convert_months(date_str: str) -> str:
+    date_str = _require_string(date_str)
     for month_re, shortened in MONTH_PATTERNS:
         date_str = month_re.sub(shortened, date_str)
     return date_str
@@ -87,10 +109,21 @@ def _normalize_day_ordinals(text: str) -> str:
 
 
 def date(date_format: str | list[str]) -> Callable[[str], str | None]:
+    if type(date_format) is str:
+        if not date_format:
+            raise ValueError("date format must be non-empty")
+        formats = (date_format,)
+    elif type(date_format) is list:
+        if not date_format or any(type(fmt) is not str or not fmt for fmt in date_format):
+            raise ValueError("date formats must be a non-empty list of non-empty strings")
+        formats = tuple(date_format)
+    else:
+        raise TypeError("date format must be a string or list of strings")
+
     def inner(input_value: str) -> str | None:
+        input_value = _require_string(input_value)
         sanitized = re.sub(r"\W+", " ", input_value).strip()
         sanitized = _normalize_day_ordinals(convert_months(sanitized))
-        formats = [date_format] if not isinstance(date_format, list) else date_format
         for fmt in formats:
             py_fmt = _normalize_custom_date_format(fmt)
             try:
@@ -103,6 +136,7 @@ def date(date_format: str | list[str]) -> Callable[[str], str | None]:
 
 
 def range_func(input_str: str) -> list[int] | None:
+    input_str = _require_string(input_str)
     numbers = [int(x) for x in re.findall(r"\d+", input_str)]
 
     if (
@@ -120,6 +154,7 @@ def range_func(input_str: str) -> list[int] | None:
 
 
 def range_x_of_y_func(input_str: str) -> list[int] | None:
+    input_str = _require_string(input_str)
     numbers = [int(x) for x in re.findall(r"\d+", input_str)]
     if len(numbers) != 1 or not 1 <= numbers[0] <= MAX_EXPANDED_RANGE_ITEMS:
         return None
@@ -127,6 +162,7 @@ def range_x_of_y_func(input_str: str) -> list[int] | None:
 
 
 def year_range(input_value: str) -> str | None:
+    input_value = _require_string(input_value)
     parts = re.findall(r"\d+", input_value)
     if not parts:
         return None
@@ -152,8 +188,15 @@ def year_range(input_value: str) -> str | None:
 def array(
     chain: Callable[[str], str | int | None] | None = None,
 ) -> Callable[[str], list[str | int | None]]:
+    if chain is not None and not callable(chain):
+        raise TypeError("array chain must be callable or None")
+
     def inner(input_value: str) -> list[str | int | None]:
-        return [chain(input_value) if chain else input_value]
+        input_value = _require_string(input_value)
+        output_value = chain(input_value) if chain else input_value
+        if output_value is not None:
+            _require_scalar(output_value, "array chain result")
+        return [output_value]
 
     return inner
 
@@ -161,10 +204,16 @@ def array(
 def uniq_concat(
     chain: Callable[[str], str | int],
 ) -> Callable[[str, list[str | int] | None], list[str | int]]:
+    if not callable(chain):
+        raise TypeError("unique-concat chain must be callable")
+
     def inner(input_value: str, result: list[str | int] | None = None) -> list[str | int]:
+        input_value = _require_string(input_value)
         if result is None:
             result = []
-        output_value = chain(input_value)
+        elif type(result) is not list or any(type(item) not in (str, int) for item in result):
+            raise TypeError("unique-concat result must be a list of strings or integers")
+        output_value = _require_scalar(chain(input_value), "unique-concat chain result")
         if output_value not in result:
             result.append(output_value)
         return result
@@ -173,7 +222,7 @@ def uniq_concat(
 
 
 def transform_resolution(input_value: str) -> str:
-    input_value = lowercase(input_value)
+    input_value = lowercase(_require_string(input_value))
 
     if "2160" in input_value or "4k" in input_value:
         return "2160p"

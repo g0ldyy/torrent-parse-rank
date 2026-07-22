@@ -144,6 +144,72 @@ def test_native_parser_rejects_oversized_of_range_without_allocating_it():
     assert parsed["episodes"] == []
 
 
+@pytest.mark.parametrize(
+    "transformer",
+    [
+        transformers.none,
+        transformers.integer,
+        transformers.first_integer,
+        transformers.boolean,
+        transformers.lowercase,
+        transformers.uppercase,
+        transformers.convert_months,
+        transformers.range_func,
+        transformers.range_x_of_y_func,
+        transformers.year_range,
+        transformers.transform_resolution,
+    ],
+)
+@pytest.mark.parametrize("input_value", [None, 1, False, []])
+def test_transformers_reject_non_string_inputs(transformer, input_value):
+    with pytest.raises(TypeError, match="input must be a string"):
+        transformer(input_value)
+
+
+@pytest.mark.parametrize("date_format", [None, (), 1, False])
+def test_date_transformer_rejects_invalid_format_roots(date_format):
+    with pytest.raises(TypeError, match="date format"):
+        transformers.date(date_format)
+
+
+@pytest.mark.parametrize("date_format", ["", [], [""], ["YYYY", 1]])
+def test_date_transformer_rejects_empty_or_invalid_formats(date_format):
+    with pytest.raises(ValueError, match="date format"):
+        transformers.date(date_format)
+
+
+def test_date_transformer_copies_and_validates_current_formats():
+    formats = ["YYYY MM DD"]
+    transform = transformers.date(formats)
+    formats[0] = "invalid"
+
+    assert transform("2026 07 22") == "2026-07-22"
+    with pytest.raises(TypeError, match="input must be a string"):
+        transform(None)
+
+
+@pytest.mark.parametrize("factory", [transformers.array, transformers.uniq_concat])
+def test_chain_transformers_reject_non_callable_chains(factory):
+    with pytest.raises(TypeError, match="chain must be callable"):
+        factory(1)
+
+
+def test_value_and_chain_transformers_enforce_scalar_results():
+    with pytest.raises(TypeError, match="transformer value"):
+        transformers.value(None)
+    with pytest.raises(TypeError, match="callable result"):
+        transformers.value(lambda _value: True)("input")
+    with pytest.raises(TypeError, match="array chain result"):
+        transformers.array(lambda _value: [])("input")
+
+    concat = transformers.uniq_concat(lambda _value: "en")
+    assert concat("English", ["fr"]) == ["fr", "en"]
+    with pytest.raises(TypeError, match="result must be a list"):
+        concat("English", ("fr",))
+    with pytest.raises(TypeError, match="chain result"):
+        transformers.uniq_concat(lambda _value: None)("English")
+
+
 def test_parser_class_methods_present_and_working():
     parser = parse.Parser()
     handlers.add_defaults(parser)
