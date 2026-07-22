@@ -19,6 +19,7 @@ Note:
 """
 
 import json
+import math
 import os
 import stat
 import tempfile
@@ -365,9 +366,13 @@ class DefaultRanking(BaseRankingModel):
     telecine: int = -10000
     telesync: int = -10000
 
+    model_config = ConfigDict(extra="forbid", strict=True, validate_default=True)
+
 
 class ConfigModelBase(BaseModel):
     """Base class for config models that need dict-like behavior"""
+
+    model_config = ConfigDict(extra="forbid", strict=True, validate_default=True)
 
     def __getitem__(self, key: str) -> Any:
         return getattr(self, key)
@@ -415,6 +420,13 @@ class OptionsConfig(ConfigModelBase):
     enable_fetch_speed_mode: bool = Field(default=True)
     remove_adult_content: bool = Field(default=True)
 
+    @field_validator("title_similarity")
+    @classmethod
+    def validate_title_similarity(cls, value: float) -> float:
+        if not math.isfinite(value) or not 0 <= value <= 1:
+            raise ValueError("title_similarity must be finite and between 0 and 1")
+        return value
+
 
 class LanguagesConfig(ConfigModelBase):
     """Configuration for which languages are enabled.
@@ -440,6 +452,8 @@ class CustomRank(BaseModel):
     fetch: bool = Field(default=True)
     use_custom_rank: bool = Field(default=False)
     rank: int = Field(default=0)
+
+    model_config = ConfigDict(extra="forbid", strict=True, validate_default=True)
 
 
 def _rank_true() -> CustomRank:
@@ -706,7 +720,10 @@ class SettingsModel(BaseModel):
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
+        extra="forbid",
         from_attributes=True,
+        strict=True,
+        validate_default=True,
     )
 
     def save(self, path: str | Path) -> None:

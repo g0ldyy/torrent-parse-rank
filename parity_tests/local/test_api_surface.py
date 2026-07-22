@@ -305,6 +305,26 @@ def test_settings_reject_scalar_pattern_configuration():
         SettingsModel(require="silently-dropped-before")
 
 
+def test_settings_and_ranking_reject_unknown_or_coerced_values():
+    invalid_factories = [
+        lambda: SettingsModel(legacy=True),
+        lambda: SettingsModel(options={"legacy": True}),
+        lambda: SettingsModel(options={"remove_ranks_under": True}),
+        lambda: SettingsModel(options={"remove_all_trash": "false"}),
+        lambda: SettingsModel(options={"title_similarity": "0.5"}),
+        lambda: SettingsModel(options={"title_similarity": float("nan")}),
+        lambda: SettingsModel(options={"title_similarity": 1.1}),
+        lambda: SettingsModel(resolutions={"r1080p": 1}),
+        lambda: SettingsModel(custom_ranks={"quality": {"remux": {"rank": True}}}),
+        lambda: DefaultRanking(remux=True),
+        lambda: DefaultRanking(legacy=1),
+    ]
+
+    for factory in invalid_factories:
+        with pytest.raises(ValueError):
+            factory()
+
+
 def test_check_pattern_preserves_pattern_semantics_and_list_mutation():
     patterns = [None, regex.compile("HDR", regex.IGNORECASE)]
     assert check_pattern(patterns, "hdr")
