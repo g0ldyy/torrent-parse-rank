@@ -26,7 +26,20 @@ from RTN import (
 )
 from RTN import parse as rtn_parse
 from RTN._native_bridge import data_to_json, rank_model_to_json, settings_to_json
-from RTN.fetch import populate_langs
+from RTN.fetch import (
+    adult_handler,
+    check_exclude,
+    check_required,
+    fetch_audio,
+    fetch_codec,
+    fetch_hdr,
+    fetch_other,
+    fetch_quality,
+    fetch_resolution,
+    language_handler,
+    populate_langs,
+    trash_handler,
+)
 from RTN.models import LanguagesConfig
 from RTN.patterns import _compile_patterns
 from RTN.ranker import (
@@ -558,3 +571,57 @@ def test_populated_language_groups_are_deterministically_ordered():
     assert settings.languages.required == sorted(settings.languages.required)
     assert settings.languages.allowed == sorted(settings.languages.allowed)
     assert {"anime", "ja", "zh", "ko"} <= set(settings.languages.exclude)
+
+
+@pytest.mark.parametrize(
+    "fetch_function",
+    [
+        trash_handler,
+        adult_handler,
+        language_handler,
+        check_exclude,
+        fetch_resolution,
+        fetch_audio,
+        fetch_quality,
+        fetch_codec,
+        fetch_hdr,
+        fetch_other,
+    ],
+)
+def test_failed_key_fetch_helpers_enforce_current_boundaries(fetch_function):
+    data = ParsedData(raw_title="Movie.2026")
+    settings = SettingsModel()
+    assert type(fetch_function(data, settings, set())) is bool
+
+    for args in (
+        (object(), settings, set()),
+        (data, object(), set()),
+        (data, settings, []),
+        (data, settings, {1}),
+    ):
+        with pytest.raises(TypeError):
+            fetch_function(*args)
+
+
+def test_fetch_entry_points_reject_non_current_controls_and_roots():
+    data = ParsedData(raw_title="Movie.2026")
+    settings = SettingsModel()
+    ranking = DefaultRanking()
+
+    with pytest.raises(TypeError):
+        check_required(object(), settings)
+    with pytest.raises(TypeError):
+        check_required(data, object())
+    with pytest.raises(TypeError):
+        populate_langs(object())
+
+    for speed_mode in (1, 0, None, "true"):
+        with pytest.raises(TypeError, match="Speed mode"):
+            check_fetch(data, settings, speed_mode=speed_mode)
+        with pytest.raises(TypeError, match="Speed mode"):
+            check_fetch_and_rank(data, settings, ranking, speed_mode=speed_mode)
+        with pytest.raises(TypeError, match="Speed mode"):
+            check_fetch_and_rank_many([], settings, ranking, speed_mode=speed_mode)
+
+    with pytest.raises(TypeError, match="iterable"):
+        check_fetch_and_rank_many(object(), settings, ranking)

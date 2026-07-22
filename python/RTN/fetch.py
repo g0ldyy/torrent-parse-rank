@@ -77,7 +77,25 @@ COMMON = {"de", "es", "hi", "ta", "ru", "ua", "th", "it", "zh", "ar", "fr"}
 ALL = ANIME | NON_ANIME
 
 
+def _validate_data_settings(data: ParsedData, settings: SettingsModel) -> None:
+    if not isinstance(data, ParsedData):
+        raise TypeError("Parsed data must be an instance of ParsedData.")
+    if not isinstance(settings, SettingsModel):
+        raise TypeError("Settings must be an instance of SettingsModel.")
+
+
+def _validate_rank_model(rank_model: BaseRankingModel) -> None:
+    if not isinstance(rank_model, BaseRankingModel):
+        raise TypeError("Rank model must be an instance of BaseRankingModel.")
+
+
+def _validate_speed_mode(speed_mode: bool) -> None:
+    if type(speed_mode) is not bool:
+        raise TypeError("Speed mode must be a boolean.")
+
+
 def _native_payload(data: ParsedData, settings: SettingsModel) -> tuple[str, str]:
+    _validate_data_settings(data, settings)
     return data_settings_to_json(data, settings)
 
 
@@ -87,6 +105,8 @@ def _run_bool_with_failed_keys(
     settings: SettingsModel,
     failed_keys: set[str],
 ) -> bool:
+    if type(failed_keys) is not set or any(type(key) is not str for key in failed_keys):
+        raise TypeError("Failed keys must be a set of strings.")
     data_json, settings_json = _native_payload(data, settings)
     res, keys = native_fn(data_json, settings_json)
     failed_keys.update(keys)
@@ -106,11 +126,7 @@ def _make_failed_key_handler(
 def check_fetch(
     data: ParsedData, settings: SettingsModel, speed_mode: bool = True
 ) -> tuple[bool, list[str]]:
-    if not isinstance(data, ParsedData):
-        raise TypeError("Parsed data must be an instance of ParsedData.")
-    if not isinstance(settings, SettingsModel):
-        raise TypeError("Settings must be an instance of SettingsModel.")
-
+    _validate_speed_mode(speed_mode)
     data_json, settings_json = _native_payload(data, settings)
     return rtn_check_fetch(data_json, settings_json, speed_mode)
 
@@ -122,12 +138,9 @@ def check_fetch_and_rank(
     speed_mode: bool = True,
 ) -> tuple[bool, list[str], int]:
     """Apply fetch filters and ranking with one Python/Rust boundary crossing."""
-    if not isinstance(data, ParsedData):
-        raise TypeError("Parsed data must be an instance of ParsedData.")
-    if not isinstance(settings, SettingsModel):
-        raise TypeError("Settings must be an instance of SettingsModel.")
-    if not isinstance(rank_model, BaseRankingModel):
-        raise TypeError("Rank model must be an instance of BaseRankingModel.")
+    _validate_data_settings(data, settings)
+    _validate_rank_model(rank_model)
+    _validate_speed_mode(speed_mode)
 
     payload = data_settings_rank_to_json(data, settings, rank_model)
     return rtn_check_fetch_and_rank(*payload, speed_mode)
@@ -140,10 +153,12 @@ def check_fetch_and_rank_many(
     speed_mode: bool = True,
 ) -> list[tuple[bool, list[str], int]]:
     """Apply shared fetch filters and ranking to parsed items in one native batch."""
+    if not isinstance(data_items, Iterable):
+        raise TypeError("Parsed data items must be iterable.")
     if not isinstance(settings, SettingsModel):
         raise TypeError("Settings must be an instance of SettingsModel.")
-    if not isinstance(rank_model, BaseRankingModel):
-        raise TypeError("Rank model must be an instance of BaseRankingModel.")
+    _validate_rank_model(rank_model)
+    _validate_speed_mode(speed_mode)
 
     data_jsons = []
     for data in data_items:
@@ -163,6 +178,8 @@ def check_fetch_and_rank_many(
 
 
 def populate_langs(settings: SettingsModel) -> None:
+    if not isinstance(settings, SettingsModel):
+        raise TypeError("Settings must be an instance of SettingsModel.")
     exclude, required, allowed = rtn_populate_langs(settings_to_json(settings))
     settings.languages.exclude = list(exclude)
     settings.languages.required = list(required)
