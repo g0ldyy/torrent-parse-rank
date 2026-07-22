@@ -9,6 +9,29 @@ python "${ROOT_DIR}/scripts/extract_ptt_handlers.py" \
   --source "${ROOT_DIR}/.upstream-tests-cache/PTT/PTT/handlers.py" \
   --check
 
+for keyword_file in \
+  combined-keywords.txt \
+  short-adult-compound-words.txt \
+  short-adult-words.txt
+do
+  if ! cmp -s \
+    "${ROOT_DIR}/python/PTT/keywords/${keyword_file}" \
+    "${ROOT_DIR}/.upstream-tests-cache/PTT/PTT/keywords/${keyword_file}"
+  then
+    echo "PTT keyword data is stale: ${keyword_file}" >&2
+    exit 1
+  fi
+done
+
+if ! cmp -s \
+  "${ROOT_DIR}/python/PTT/keywords/combined-keywords.txt" \
+  "${ROOT_DIR}/crates/ptt-core/data/combined-keywords.txt"
+then
+  echo "Rust and Python combined adult keyword data differ" >&2
+  exit 1
+fi
+echo "verified PTT keyword data parity"
+
 FIXTURE="${ROOT_DIR}/parity_tests/upstream/rtn/video/[Yameii] Mushoku Tensei - Jobless Reincarnation - S02E15 [English Dub] [CR WEB-DL 1080p] [6CD6B5CA].mkv"
 if [[ ! -f "${FIXTURE}" ]]; then
   mkdir -p "$(dirname "${FIXTURE}")"
