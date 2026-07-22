@@ -2,7 +2,7 @@ use std::hint::black_box;
 use std::sync::LazyLock;
 
 use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
-use rtn_core::{check_fetch, get_rank, parse};
+use rtn_core::{check_fetch, check_fetch_and_rank_many, get_rank, parse};
 use serde_json::{Value, json};
 
 const TITLES: [&str; 20] = [
@@ -30,9 +30,9 @@ const TITLES: [&str; 20] = [
 
 static SETTINGS: LazyLock<Value> = LazyLock::new(|| {
     json!({
-        "require": [],
-        "exclude": [],
-        "preferred": [],
+        "require": ["."],
+        "exclude": ["(?:sample|password)$"],
+        "preferred": ["(?:web.?dl|hevc|x265)"],
         "options": {
             "remove_all_trash": true,
             "remove_unknown_languages": false,
@@ -122,7 +122,7 @@ fn rtn_benches(c: &mut Criterion) {
         });
     });
 
-    group.bench_function("batch_128_parse_fetch_rank", |b| {
+    group.bench_function("scalar_128_parse_fetch_rank", |b| {
         let settings = &*SETTINGS;
         let rank_model = &*RANK_MODEL;
         b.iter_batched(
@@ -145,6 +145,33 @@ fn rtn_benches(c: &mut Criterion) {
                     }
                 }
                 black_box((aggregate_rank, aggregate_fetch));
+            },
+            BatchSize::SmallInput,
+        );
+    });
+
+    group.bench_function("batch_128_parse_fetch_rank", |b| {
+        let settings = &*SETTINGS;
+        let rank_model = &*RANK_MODEL;
+        b.iter_batched(
+            || {
+                (0..128)
+                    .map(|i| TITLES[i % TITLES.len()])
+                    .collect::<Vec<_>>()
+            },
+            |batch| {
+                let parsed = batch
+                    .into_iter()
+                    .map(|title| parse(title, false).expect("parse should pass"))
+                    .collect::<Vec<_>>();
+                let results = check_fetch_and_rank_many(
+                    black_box(&parsed),
+                    settings,
+                    rank_model,
+                    black_box(true),
+                )
+                .expect("batch fetch and rank should pass");
+                black_box(results);
             },
             BatchSize::SmallInput,
         );
