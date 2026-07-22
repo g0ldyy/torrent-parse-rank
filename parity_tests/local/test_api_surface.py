@@ -92,6 +92,15 @@ def test_remote_workflow_actions_are_pinned_to_full_commits():
         )
 
 
+def test_full_quality_gate_does_not_repeat_local_tests():
+    root = Path(__file__).resolve().parents[2]
+    quality_gate = (root / "scripts" / "quality_gate.sh").read_text(encoding="utf-8")
+    parity_gate = (root / "scripts" / "run_parity_tests.sh").read_text(encoding="utf-8")
+
+    assert "pytest -q parity_tests/local" in quality_gate
+    assert "parity_tests/local" not in parity_gate
+
+
 def test_parse_module_symbols_present():
     for name in [
         "NON_ENGLISH_CHARS",

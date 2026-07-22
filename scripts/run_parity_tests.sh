@@ -44,4 +44,4 @@ if [[ ! -f "${FIXTURE}" ]]; then
 fi
 
 export PYTHONPATH="${ROOT_DIR}/python"
-pytest -q "${ROOT_DIR}/parity_tests/upstream/ptt" "${ROOT_DIR}/parity_tests/upstream/rtn" "${ROOT_DIR}/parity_tests/local" "$@"
+pytest -q "${ROOT_DIR}/parity_tests/upstream/ptt" "${ROOT_DIR}/parity_tests/upstream/rtn" "$@"
