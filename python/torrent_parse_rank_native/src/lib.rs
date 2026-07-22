@@ -1,7 +1,8 @@
 use std::collections::BTreeSet;
 
 use ptt_core::{
-    clean_title_native, languages_translation_table, parse_many, parse_title, translate_langs_codes,
+    clean_title_native, languages_translation_table, parse_many, parse_title, parse_title_context,
+    translate_langs_codes,
 };
 use pyo3::exceptions::{PyTypeError, PyValueError};
 use pyo3::prelude::*;
@@ -181,6 +182,44 @@ fn ptt_parse_title(
     }
     let parsed = parse_title(raw_title, translate_languages).map_err(to_py_value_error)?;
     map_to_py(py, &parsed)
+}
+
+fn byte_to_char_index(text: &str, byte_index: usize) -> usize {
+    let mut boundary = byte_index.min(text.len());
+    while boundary > 0 && !text.is_char_boundary(boundary) {
+        boundary -= 1;
+    }
+    text[..boundary].chars().count()
+}
+
+#[pyfunction]
+fn ptt_parse_title_context(py: Python<'_>, raw_title: &str) -> PyResult<Py<PyAny>> {
+    if raw_title.is_empty() {
+        return Err(PyValueError::new_err(
+            "raw_title must be a non-empty string.",
+        ));
+    }
+    let context = parse_title_context(raw_title, false).map_err(to_py_value_error)?;
+    let output = PyDict::new(py);
+    output.set_item("result", map_to_py(py, &context.result)?)?;
+    output.set_item("working_title", &context.working_title)?;
+    output.set_item(
+        "end_of_title",
+        byte_to_char_index(&context.working_title, context.end_of_title),
+    )?;
+
+    let matched = PyDict::new(py);
+    for (name, info) in context.matched {
+        let match_info = PyDict::new(py);
+        match_info.set_item("raw_match", info.raw_match)?;
+        match_info.set_item(
+            "match_index",
+            byte_to_char_index(&context.working_title, info.match_index),
+        )?;
+        matched.set_item(name, match_info)?;
+    }
+    output.set_item("matched", matched)?;
+    Ok(output.into_any().unbind())
 }
 
 #[pyfunction]
@@ -422,6 +461,7 @@ fn rtn_calculate_preferred_langs(data_json: &str, settings_json: &str) -> PyResu
 #[pymodule]
 fn _native(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(ptt_parse_title, m)?)?;
+    m.add_function(wrap_pyfunction!(ptt_parse_title_context, m)?)?;
     m.add_function(wrap_pyfunction!(ptt_parse_many, m)?)?;
     m.add_function(wrap_pyfunction!(ptt_clean_title, m)?)?;
     m.add_function(wrap_pyfunction!(ptt_translate_langs, m)?)?;

@@ -7,6 +7,7 @@ from torrent_parse_rank_native import (
     ptt_clean_title,
     ptt_languages_translation_table,
     ptt_parse_title,
+    ptt_parse_title_context,
     ptt_translate_langs,
 )
 
@@ -69,6 +70,8 @@ def extend_options(options: dict[str, Any] | None = None) -> dict[str, Any]:
         options = {}
     elif type(options) is not dict:
         raise TypeError("handler options must be a dictionary or None")
+    else:
+        options = dict(options)
 
     default_options = {
         "skipIfAlreadyFound": True,
@@ -87,17 +90,31 @@ def extend_options(options: dict[str, Any] | None = None) -> dict[str, Any]:
 
 
 def create_handler_from_regexp(
-    name: str, reg_exp: Any, transformer: Callable, options: dict[str, Any]
+    name: str,
+    reg_exp: regex.Pattern,
+    transformer: Callable,
+    options: dict[str, Any] | None,
 ) -> Callable:
     """
-    Compatibility helper to build a Python handler from a regex-like object.
+    Build a current custom Python handler from a regex pattern.
     """
+    if type(name) is not str or not name:
+        raise TypeError("handler name must be a non-empty string")
+    if not isinstance(reg_exp, regex.Pattern):
+        raise TypeError("handler pattern must be a regex.Pattern")
+    if not callable(transformer):
+        raise TypeError("handler transformer must be callable")
+    options = extend_options(options)
     param_count = len(inspect.signature(transformer).parameters)
 
     def handler(context: dict[str, Any]) -> dict[str, Any] | None:
+        if type(context) is not dict or set(context) != {"title", "result", "matched"}:
+            raise TypeError("handler context has an invalid schema")
         title = context["title"]
         result = context["result"]
         matched = context["matched"]
+        if type(title) is not str or type(result) is not dict or type(matched) is not dict:
+            raise TypeError("handler context has invalid field types")
 
         if name in result and options.get("skipIfAlreadyFound", False):
             return None
@@ -106,7 +123,7 @@ def create_handler_from_regexp(
             print(
                 name,
                 "Try to match " + title,
-                "To " + getattr(reg_exp, "pattern", str(reg_exp)),
+                "To " + reg_exp.pattern,
             )
 
         match = reg_exp.search(title)
@@ -188,7 +205,7 @@ class Parser:
         if handler is None and callable(handler_name):
             handler = handler_name
             handler.handler_name = getattr(handler_name, "__name__", "unknown")
-        elif isinstance(handler_name, str) and hasattr(handler, "search"):
+        elif isinstance(handler_name, str) and isinstance(handler, regex.Pattern):
             transformer = transformer if callable(transformer) else (lambda x, *_: x)
             options = extend_options(options)
             handler = create_handler_from_regexp(handler_name, handler, transformer, options)
@@ -202,4 +219,74 @@ class Parser:
         self.handlers.append(handler)
 
     def parse(self, title: str, translate_languages: bool = False) -> dict[str, Any]:
-        return ptt_parse_title(title, translate_languages)
+        if type(title) is not str:
+            raise TypeError("title must be a string")
+        if not title:
+            raise ValueError("title must be a non-empty string")
+        if type(translate_languages) is not bool:
+            raise TypeError("translate_languages must be a boolean")
+        if not self.handlers:
+            return ptt_parse_title(title, translate_languages)
+
+        native_context = ptt_parse_title_context(title)
+        if type(native_context) is not dict or set(native_context) != {
+            "result",
+            "working_title",
+            "end_of_title",
+            "matched",
+        }:
+            raise ValueError("native parser context has an invalid schema")
+        result = native_context["result"]
+        working_title = native_context["working_title"]
+        end_of_title = native_context["end_of_title"]
+        matched = native_context["matched"]
+        if (
+            type(result) is not dict
+            or type(working_title) is not str
+            or type(end_of_title) is not int
+            or not 0 <= end_of_title <= len(working_title)
+            or type(matched) is not dict
+        ):
+            raise ValueError("native parser context has invalid field types")
+
+        for handler in self.handlers:
+            match_result = handler({"title": working_title, "result": result, "matched": matched})
+            if match_result is None:
+                continue
+            if type(match_result) is not dict or set(match_result) != {
+                "raw_match",
+                "match_index",
+                "remove",
+                "skip_from_title",
+            }:
+                raise TypeError("custom handler result has an invalid schema")
+
+            raw_match = match_result["raw_match"]
+            match_index = match_result["match_index"]
+            remove = match_result["remove"]
+            skip_from_title = match_result["skip_from_title"]
+            if (
+                type(raw_match) is not str
+                or type(match_index) is not int
+                or not 0 <= match_index <= len(working_title)
+                or type(remove) is not bool
+                or type(skip_from_title) is not bool
+            ):
+                raise TypeError("custom handler result has invalid field types")
+
+            if remove:
+                working_title = (
+                    working_title[:match_index] + working_title[match_index + len(raw_match) :]
+                )
+            if not skip_from_title and 1 < match_index < end_of_title:
+                end_of_title = match_index
+            if remove and skip_from_title and match_index < end_of_title:
+                end_of_title = max(0, end_of_title - len(raw_match))
+
+        result.setdefault("episodes", [])
+        result.setdefault("seasons", [])
+        result.setdefault("languages", [])
+        if translate_languages and result["languages"]:
+            result["languages"] = ptt_translate_langs(result["languages"])
+        result["title"] = ptt_clean_title(working_title[:end_of_title])
+        return result

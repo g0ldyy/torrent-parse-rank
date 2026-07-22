@@ -19,9 +19,17 @@ pub enum ParseError {
 }
 
 #[derive(Debug, Clone)]
-struct MatchInfo {
-    raw_match: String,
-    match_index: usize,
+pub struct MatchInfo {
+    pub raw_match: String,
+    pub match_index: usize,
+}
+
+#[derive(Debug)]
+pub struct ParseContext {
+    pub result: Map<String, Value>,
+    pub working_title: String,
+    pub end_of_title: usize,
+    pub matched: HashMap<String, MatchInfo>,
 }
 
 #[derive(Debug, Clone)]
@@ -264,6 +272,14 @@ impl ParserEngine {
         raw_title: &str,
         translate_languages: bool,
     ) -> Result<Map<String, Value>, ParseError> {
+        Ok(self.parse_context(raw_title, translate_languages)?.result)
+    }
+
+    fn parse_context(
+        &self,
+        raw_title: &str,
+        translate_languages: bool,
+    ) -> Result<ParseContext, ParseError> {
         let mut title = SUB_PATTERN.replace_all(raw_title, " ").to_string();
         let mut result = Map::new();
         let mut matched: HashMap<String, MatchInfo> = HashMap::new();
@@ -338,7 +354,12 @@ impl ParserEngine {
             &title
         };
         result.insert("title".to_owned(), Value::String(clean_title(title_slice)));
-        Ok(result)
+        Ok(ParseContext {
+            result,
+            working_title: title,
+            end_of_title,
+            matched,
+        })
     }
 
     fn apply_regex_handler(
@@ -1259,6 +1280,13 @@ pub fn parse_title(
     translate_languages: bool,
 ) -> Result<Map<String, Value>, ParseError> {
     ENGINE.parse(raw_title, translate_languages)
+}
+
+pub fn parse_title_context(
+    raw_title: &str,
+    translate_languages: bool,
+) -> Result<ParseContext, ParseError> {
+    ENGINE.parse_context(raw_title, translate_languages)
 }
 
 pub fn parse_many<'a, I>(

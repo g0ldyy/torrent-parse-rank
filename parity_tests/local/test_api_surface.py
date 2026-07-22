@@ -218,6 +218,82 @@ def test_parser_class_methods_present_and_working():
     assert out["title"] == "The Matrix"
 
 
+def test_parser_without_custom_handlers_keeps_native_fast_path(monkeypatch):
+    def unexpected_context(_title):
+        raise AssertionError("custom context should not be built")
+
+    monkeypatch.setattr(parse, "ptt_parse_title_context", unexpected_context)
+
+    out = parse.Parser().parse("The.Matrix.1999.1080p.BluRay.x264")
+
+    assert out["title"] == "The Matrix"
+
+
+def test_parser_custom_regex_handler_runs_after_native_defaults():
+    parser = parse.Parser()
+    options = {"skipFromTitle": True}
+    parser.add_handler(
+        "uploader",
+        regex.compile(r"Uploader: (\w+)"),
+        transformers.uppercase,
+        options,
+    )
+    options["value"] = "poisoned"
+
+    out = parser.parse("Movie.2026.1080p Uploader: Alice")
+
+    assert out["title"] == "Movie"
+    assert out["uploader"] == "ALICE"
+
+
+def test_parser_custom_function_can_extend_native_result():
+    parser = parse.Parser()
+
+    def custom_handler(context):
+        context["result"]["custom"] = context["title"]
+
+    parser.add_handler("custom", custom_handler)
+    out = parser.parse("Movie.2026.1080p")
+
+    assert out["title"] == "Movie"
+    assert out["custom"] == "Movie.."
+
+
+def test_parser_custom_handler_uses_character_indices_for_unicode_titles():
+    parser = parse.Parser()
+    parser.add_handler("custom", regex.compile("CustomTag"), transformers.none)
+
+    out = parser.parse("Amélie.CustomTag")
+
+    assert out["custom"] == "CustomTag"
+    assert out["title"] == "Amélie"
+
+
+def test_parser_rejects_invalid_custom_handler_results():
+    invalid_results = [
+        [],
+        {},
+        {
+            "raw_match": "tag",
+            "match_index": True,
+            "remove": False,
+            "skip_from_title": False,
+        },
+        {
+            "raw_match": "tag",
+            "match_index": 999,
+            "remove": False,
+            "skip_from_title": False,
+        },
+    ]
+
+    for invalid_result in invalid_results:
+        parser = parse.Parser()
+        parser.add_handler("custom", lambda _context, value=invalid_result: value)
+        with pytest.raises(TypeError):
+            parser.parse("Movie.2026")
+
+
 def test_adult_keyword_loading_and_helpers(tmp_path: Path):
     keywords = adult.load_adult_keywords()
     assert isinstance(keywords, set)
