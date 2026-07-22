@@ -52,11 +52,11 @@ def settings_to_json(settings: Any) -> str:
 
 
 def data_to_json(data: Any) -> str:
-    return _dumps(data.model_dump(mode="json", by_alias=True))
+    return data.model_dump_json(by_alias=True)
 
 
 def rank_model_to_json(rank_model: Any) -> str:
-    return _dumps(rank_model.model_dump(mode="json", by_alias=True))
+    return rank_model.model_dump_json(by_alias=True)
 
 
 def data_settings_to_json(data: Any, settings: Any) -> tuple[str, str]:

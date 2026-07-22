@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import orjson
 import PTT
 import pytest
 import regex
@@ -20,6 +21,7 @@ from RTN import (
     title_match,
 )
 from RTN import parse as rtn_parse
+from RTN._native_bridge import data_to_json, rank_model_to_json
 from RTN.fetch import populate_langs
 from RTN.models import LanguagesConfig
 from RTN.patterns import _compile_patterns
@@ -261,6 +263,16 @@ def test_sort_torrents_rejects_invalid_resolutions(resolutions):
 
 def test_sort_torrents_keeps_zero_as_unbounded():
     assert sort_torrents(set(), bucket_limit=0) == {}
+
+
+def test_direct_model_json_matches_current_native_payloads():
+    parsed = rtn_parse("Movie.2026.2160p.WEB-DL.DV.HDR10.HEVC.TrueHD.Atmos")
+    ranking = DefaultRanking()
+
+    assert orjson.loads(data_to_json(parsed)) == parsed.model_dump(mode="json", by_alias=True)
+    assert orjson.loads(rank_model_to_json(ranking)) == ranking.model_dump(
+        mode="json", by_alias=True
+    )
 
 
 def test_populated_language_groups_are_deterministically_ordered():
