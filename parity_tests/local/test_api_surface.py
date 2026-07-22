@@ -240,6 +240,10 @@ def test_title_similarity_rejects_non_mapping_aliases(aliases):
         get_lev_ratio("Title", "Title", aliases=aliases)
 
 
+def test_missing_aliases_match_an_explicit_empty_mapping():
+    assert get_lev_ratio("Title", "Title") == get_lev_ratio("Title", "Title", aliases={})
+
+
 def test_title_similarity_rejects_boolean_threshold():
     with pytest.raises(ValueError, match="threshold"):
         title_match("Title", "Title", threshold=True)

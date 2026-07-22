@@ -3,6 +3,8 @@ from typing import Any
 import orjson
 import regex
 
+_EMPTY_OBJECT_JSON = "{}"
+
 
 def _dumps(payload: Any) -> str:
     return orjson.dumps(payload).decode("utf-8")
@@ -63,7 +65,7 @@ def data_settings_rank_to_json(data: Any, settings: Any, rank_model: Any) -> tup
 
 def aliases_to_json(aliases: dict | None) -> str:
     if aliases is None:
-        return _dumps({})
+        return _EMPTY_OBJECT_JSON
     if not isinstance(aliases, dict):
         raise TypeError("Aliases must be a dictionary or None.")
     return _dumps(aliases)
