@@ -3,9 +3,9 @@ use std::collections::BTreeSet;
 use ptt_core::{
     clean_title_native, languages_translation_table, parse_many, parse_title, translate_langs_codes,
 };
-use pyo3::exceptions::PyValueError;
+use pyo3::exceptions::{PyTypeError, PyValueError};
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyList};
+use pyo3::types::{PyBool, PyDict, PyList};
 use rtn_core::{
     CompiledPatterns, RtnError, adult_handler, calculate_audio_rank, calculate_channels_rank,
     calculate_codec_rank, calculate_extra_ranks, calculate_hdr_rank, calculate_preferred,
@@ -70,6 +70,34 @@ fn parse_data_and_settings(
 
 fn to_py_value_error<E: std::fmt::Display>(err: E) -> PyErr {
     PyValueError::new_err(err.to_string())
+}
+
+struct NonBooleanFloat(f64);
+
+impl FromPyObject<'_, '_> for NonBooleanFloat {
+    type Error = PyErr;
+
+    fn extract(value: Borrowed<'_, '_, PyAny>) -> PyResult<Self> {
+        if value.is_instance_of::<PyBool>() {
+            return Err(PyTypeError::new_err("threshold must be a number, not bool"));
+        }
+        Ok(Self(value.extract()?))
+    }
+}
+
+struct NonBooleanInteger(i64);
+
+impl FromPyObject<'_, '_> for NonBooleanInteger {
+    type Error = PyErr;
+
+    fn extract(value: Borrowed<'_, '_, PyAny>) -> PyResult<Self> {
+        if value.is_instance_of::<PyBool>() {
+            return Err(PyTypeError::new_err(
+                "season_num must be an integer, not bool",
+            ));
+        }
+        Ok(Self(value.extract()?))
+    }
 }
 
 fn parse_data_and_settings_py(
@@ -209,27 +237,33 @@ impl RtnPatternSet {
 }
 
 #[pyfunction]
-#[pyo3(signature = (correct_title, parsed_title, threshold=0.85, aliases_json="{}"))]
+#[pyo3(
+    signature = (correct_title, parsed_title, threshold=NonBooleanFloat(0.85), aliases_json="{}"),
+    text_signature = "(correct_title, parsed_title, threshold=0.85, aliases_json='{}')"
+)]
 fn rtn_get_lev_ratio(
     correct_title: &str,
     parsed_title: &str,
-    threshold: f64,
+    threshold: NonBooleanFloat,
     aliases_json: &str,
 ) -> PyResult<f64> {
     let aliases = parse_json_object(aliases_json, "aliases_json").map_err(to_py_value_error)?;
-    get_lev_ratio(correct_title, parsed_title, threshold, &aliases).map_err(to_py_value_error)
+    get_lev_ratio(correct_title, parsed_title, threshold.0, &aliases).map_err(to_py_value_error)
 }
 
 #[pyfunction]
-#[pyo3(signature = (correct_title, parsed_title, threshold=0.85, aliases_json="{}"))]
+#[pyo3(
+    signature = (correct_title, parsed_title, threshold=NonBooleanFloat(0.85), aliases_json="{}"),
+    text_signature = "(correct_title, parsed_title, threshold=0.85, aliases_json='{}')"
+)]
 fn rtn_title_match(
     correct_title: &str,
     parsed_title: &str,
-    threshold: f64,
+    threshold: NonBooleanFloat,
     aliases_json: &str,
 ) -> PyResult<bool> {
     let aliases = parse_json_object(aliases_json, "aliases_json").map_err(to_py_value_error)?;
-    title_match(correct_title, parsed_title, threshold, &aliases).map_err(to_py_value_error)
+    title_match(correct_title, parsed_title, threshold.0, &aliases).map_err(to_py_value_error)
 }
 
 #[pyfunction]
@@ -243,8 +277,8 @@ fn rtn_extract_episodes(raw_title: &str) -> PyResult<Vec<i64>> {
 }
 
 #[pyfunction]
-fn rtn_episodes_from_season(raw_title: &str, season_num: i64) -> PyResult<Vec<i64>> {
-    episodes_from_season(raw_title, season_num).map_err(to_py_value_error)
+fn rtn_episodes_from_season(raw_title: &str, season_num: NonBooleanInteger) -> PyResult<Vec<i64>> {
+    episodes_from_season(raw_title, season_num.0).map_err(to_py_value_error)
 }
 
 #[pyfunction]

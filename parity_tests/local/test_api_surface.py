@@ -28,6 +28,7 @@ from RTN._native_bridge import data_to_json, rank_model_to_json, settings_to_jso
 from RTN.fetch import populate_langs
 from RTN.models import LanguagesConfig
 from RTN.patterns import _compile_patterns
+from torrent_parse_rank_native import _native
 
 
 def test_api_modules_and_symbols_present():
@@ -191,6 +192,15 @@ def test_cli_rejects_removed_anime_switch(monkeypatch):
 def test_native_adult_keyword_detection():
     assert PTT.parse_title("Alexis Texas 2024 1080p WEB-DL")["adult"] is True
     assert "adult" not in PTT.parse_title("The.Matrix.1999.1080p.BluRay")
+
+
+def test_native_numeric_boundaries_reject_booleans():
+    with pytest.raises(TypeError, match="threshold.*bool"):
+        _native.rtn_get_lev_ratio("title", "title", True)
+    with pytest.raises(TypeError, match="threshold.*bool"):
+        _native.rtn_title_match("title", "title", True)
+    with pytest.raises(TypeError, match="season_num.*bool"):
+        _native.rtn_episodes_from_season("Show.S01E01", True)
 
 
 def test_combined_fetch_and_rank_matches_individual_calls():
