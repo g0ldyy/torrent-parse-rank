@@ -43,6 +43,11 @@ include = [
     { path = "LICENSE", format = "sdist" },
     { path = "LICENSE", format = "wheel" },
 ]
+exclude = [
+    { path = "python/torrent_parse_rank_native/.gitignore", format = "wheel" },
+    { path = "python/torrent_parse_rank_native/Cargo.toml", format = "wheel" },
+    { path = "python/torrent_parse_rank_native/src/**", format = "wheel" },
+]
 module-name = "torrent_parse_rank_native._native"
 features = ["pyo3/extension-module"]
 

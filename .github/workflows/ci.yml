@@ -49,7 +49,9 @@ jobs:
       - name: Wheel build check
         env:
           PCRE2_SYS_STATIC: "1"
-        run: uv run maturin build --release --skip-auditwheel
+        run: |
+          uv run maturin build --release --skip-auditwheel
+          uv run python scripts/check_wheel.py target/wheels/*.whl
 
   rust-bench-build:
     runs-on: ubuntu-latest
