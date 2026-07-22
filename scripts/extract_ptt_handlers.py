@@ -12,6 +12,35 @@ DEFAULT_HANDLERS_FILE = ROOT / ".upstream-tests-cache" / "PTT" / "PTT" / "handle
 DEFAULT_OUT_FILE = ROOT / "crates" / "ptt-core" / "src" / "generated" / "handlers.json"
 
 
+def lower_pattern_for_pcre2(pattern: str) -> str:
+    """Emit the current handler semantics using patterns PCRE2 can compile directly."""
+    if "Featurettes?" in pattern:
+        return r"(?:\b(?:19\d{2}|20\d{2})\b.*\bFeaturettes?\b|\bFeaturettes?\b(?!.*\b(?:19\d{2}|20\d{2})\b))"
+    if "(?:Sample)" in pattern:
+        return r"(?:\b(?:19\d{2}|20\d{2})\b.*\bSample\b|\bSample\b(?!.*\b(?:19\d{2}|20\d{2})\b))"
+    if "Trailers?" in pattern:
+        return r"(?:\b(?:19\d{2}|20\d{2})\b.*\bTrailers?\b|\bTrailers?\b(?!.*\b(?:19\d{2}|20\d{2}|.(Park|And))\b))"
+    if r"(?<!(?:seasons?|[Сс]езони?)\W*)" in pattern:
+        return pattern.replace(r"(?<!(?:seasons?|[Сс]езони?)\W*)", "")
+    if "(?<=remux.*)" in pattern:
+        return r"\bBlu[ .-]*Ray\b(?=.*remux)"
+    if r"(?<!\bEp?(?:isode)? ?\d+\b.*)" in pattern:
+        return pattern.replace(r"(?<!\bEp?(?:isode)? ?\d+\b.*)", "")
+    if r"(?<=^\[.+].+)" in pattern:
+        return pattern.replace(r"(?<=^\[.+].+)", "")
+    if r"(?<=[ .,/-]+(?:[A-Z]{2}[ .,/-]+){2,})" in pattern:
+        return pattern.replace(r"(?<=[ .,/-]+(?:[A-Z]{2}[ .,/-]+){2,})", "")
+    if r"(?<=[ .,/-]+[A-Z]{2}[ .,/-]+)" in pattern:
+        return pattern.replace(r"(?<=[ .,/-]+[A-Z]{2}[ .,/-]+)", "")
+    if r"(?<!w{3}\.\w+\.)" in pattern:
+        return pattern.replace(r"(?<!w{3}\.\w+\.)", "")
+    if r"(?<!w{3}\.\w+\.|Sci-)" in pattern:
+        return pattern.replace(r"(?<!w{3}\.\w+\.|Sci-)", "")
+    if r"(?<=subs?\([a-z,]+)" in pattern:
+        return pattern.replace(r"(?<=subs?\([a-z,]+)", "")
+    return pattern
+
+
 def flags_from_compile_call(call: ast.Call) -> int:
     # regex.IGNORECASE == 2
     flags = 0
@@ -102,7 +131,7 @@ def extract_handlers(handlers_file: Path) -> dict[str, list[dict[str, Any]]]:
                     "the generator cannot preserve it safely."
                 )
             entry["kind"] = "regex"
-            entry["pattern"] = pattern_node.value
+            entry["pattern"] = lower_pattern_for_pcre2(pattern_node.value)
             entry["flags"] = flags_from_compile_call(handler_node)
             entry["transform"] = transform_spec(transformer_node)
         else:

@@ -119,22 +119,9 @@ fn compile_regex(pattern: &str, ignore_case: bool) -> Result<PcreRegex, ParseErr
     builder.ucp(true);
     builder.caseless(ignore_case);
     builder.jit(true);
-    match builder.build(&normalized_pattern) {
-        Ok(re) => Ok(re),
-        Err(first_err) => {
-            if let Some(fallback) = simplify_pattern_for_pcre2(pattern) {
-                let fallback = normalize_pattern_for_pcre2(&fallback);
-                return builder.build(&fallback).map_err(|e| {
-                    ParseError::Regex(format!(
-                        "Error compiling regex: {e}; pattern={pattern}; fallback={fallback}"
-                    ))
-                });
-            }
-            Err(ParseError::Regex(format!(
-                "Error compiling regex: {first_err}; pattern={pattern}"
-            )))
-        }
-    }
+    builder.build(&normalized_pattern).map_err(|error| {
+        ParseError::Regex(format!("Error compiling regex: {error}; pattern={pattern}"))
+    })
 }
 
 fn normalize_pattern_for_pcre2(pattern: &str) -> String {
@@ -169,49 +156,6 @@ fn normalize_pattern_for_pcre2(pattern: &str) -> String {
     }
     out.replace(r"\[?\]?", r"(?:\[\]?)?")
         .replace(r"[\])?]?", r"(?:\]|\)|\?)?")
-}
-
-fn simplify_pattern_for_pcre2(pattern: &str) -> Option<String> {
-    if pattern.contains("Featurettes?") {
-        return Some(r"(?:\b(?:19\d{2}|20\d{2})\b.*\bFeaturettes?\b|\bFeaturettes?\b(?!.*\b(?:19\d{2}|20\d{2})\b))".to_owned());
-    }
-    if pattern.contains("(?:Sample)") {
-        return Some(
-            r"(?:\b(?:19\d{2}|20\d{2})\b.*\bSample\b|\bSample\b(?!.*\b(?:19\d{2}|20\d{2})\b))"
-                .to_owned(),
-        );
-    }
-    if pattern.contains("Trailers?") {
-        return Some(r"(?:\b(?:19\d{2}|20\d{2})\b.*\bTrailers?\b|\bTrailers?\b(?!.*\b(?:19\d{2}|20\d{2}|.(Park|And))\b))".to_owned());
-    }
-    if pattern.contains("(?<!(?:seasons?|[Сс]езони?)\\W*)") {
-        return Some(pattern.replace("(?<!(?:seasons?|[Сс]езони?)\\W*)", ""));
-    }
-    if pattern.contains("(?<=remux.*)") {
-        return Some(r"\bBlu[ .-]*Ray\b(?=.*remux)".to_owned());
-    }
-    if pattern.contains("(?<!\\bEp?(?:isode)? ?\\d+\\b.*)") {
-        return Some(pattern.replace("(?<!\\bEp?(?:isode)? ?\\d+\\b.*)", ""));
-    }
-    if pattern.contains("(?<=^\\[.+].+)") {
-        return Some(pattern.replace("(?<=^\\[.+].+)", ""));
-    }
-    if pattern.contains("(?<=[ .,/-]+(?:[A-Z]{2}[ .,/-]+){2,})") {
-        return Some(pattern.replace("(?<=[ .,/-]+(?:[A-Z]{2}[ .,/-]+){2,})", ""));
-    }
-    if pattern.contains("(?<=[ .,/-]+[A-Z]{2}[ .,/-]+)") {
-        return Some(pattern.replace("(?<=[ .,/-]+[A-Z]{2}[ .,/-]+)", ""));
-    }
-    if pattern.contains("(?<!w{3}\\.\\w+\\.)") {
-        return Some(pattern.replace("(?<!w{3}\\.\\w+\\.)", ""));
-    }
-    if pattern.contains("(?<!w{3}\\.\\w+\\.|Sci-)") {
-        return Some(pattern.replace("(?<!w{3}\\.\\w+\\.|Sci-)", ""));
-    }
-    if pattern.contains("(?<=subs?\\([a-z,]+)") {
-        return Some(pattern.replace("(?<=subs?\\([a-z,]+)", ""));
-    }
-    None
 }
 
 fn parse_quoted_arg(expr: &str, prefix: &str, suffix: &str) -> Option<String> {

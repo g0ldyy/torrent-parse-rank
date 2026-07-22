@@ -255,7 +255,7 @@
         "remove": false
       },
       "kind": "regex",
-      "pattern": "(?:(?<=\\b(?:19\\d{2}|20\\d{2})\\b.*)\\b(?:Featurettes?)\\b|\\bFeaturettes?\\b(?!.*\\b(?:19\\d{2}|20\\d{2})\\b))",
+      "pattern": "(?:\\b(?:19\\d{2}|20\\d{2})\\b.*\\bFeaturettes?\\b|\\bFeaturettes?\\b(?!.*\\b(?:19\\d{2}|20\\d{2})\\b))",
       "flags": 2,
       "transform": "uniq_concat(value('Featurette'))"
     },
@@ -268,7 +268,7 @@
         "remove": false
       },
       "kind": "regex",
-      "pattern": "(?:(?<=\\b(?:19\\d{2}|20\\d{2})\\b.*)\\b(?:Sample)\\b|\\b(?:Sample)\\b(?!.*\\b(?:19\\d{2}|20\\d{2})\\b))",
+      "pattern": "(?:\\b(?:19\\d{2}|20\\d{2})\\b.*\\bSample\\b|\\bSample\\b(?!.*\\b(?:19\\d{2}|20\\d{2})\\b))",
       "flags": 2,
       "transform": "uniq_concat(value('Sample'))"
     },
@@ -281,7 +281,7 @@
         "remove": false
       },
       "kind": "regex",
-      "pattern": "(?:(?<=\\b(?:19\\d{2}|20\\d{2})\\b.*)\\b(?:Trailers?)\\b|\\bTrailers?\\b(?!.*\\b(?:19\\d{2}|20\\d{2}|.(Park|And))\\b))",
+      "pattern": "(?:\\b(?:19\\d{2}|20\\d{2})\\b.*\\bTrailers?\\b|\\bTrailers?\\b(?!.*\\b(?:19\\d{2}|20\\d{2}|.(Park|And))\\b))",
       "flags": 2,
       "transform": "uniq_concat(value('Trailer'))"
     },
@@ -1321,7 +1321,7 @@
         "remove": true
       },
       "kind": "regex",
-      "pattern": "(?<=remux.*)\\bBlu[ .-]*Ray\\b",
+      "pattern": "\\bBlu[ .-]*Ray\\b(?=.*remux)",
       "flags": 2,
       "transform": "value('BluRay REMUX')"
     },
@@ -2774,7 +2774,7 @@
         "remove": false
       },
       "kind": "regex",
-      "pattern": "(?<!\\bEp?(?:isode)? ?\\d+\\b.*)\\b(\\d{2})[ ._]\\d{2}(?:.F)?\\.\\w{2,4}$",
+      "pattern": "\\b(\\d{2})[ ._]\\d{2}(?:.F)?\\.\\w{2,4}$",
       "flags": 0,
       "transform": "array(integer)"
     },
@@ -3047,7 +3047,7 @@
         "remove": true
       },
       "kind": "regex",
-      "pattern": "(?<=^\\[.+].+)[. ]+-[. ]+(\\d{1,4})[. ]+(?=\\W)",
+      "pattern": "[. ]+-[. ]+(\\d{1,4})[. ]+(?=\\W)",
       "flags": 2,
       "transform": "array(integer)"
     },
@@ -3060,7 +3060,7 @@
         "remove": false
       },
       "kind": "regex",
-      "pattern": "(?<!(?:seasons?|[Сс]езони?)\\W*)(?:[ .([-]|^)(\\d{1,3}(?:[ .]?[,&+~][ .]?\\d{1,3})+)(?:[ .)\\]-]|$)",
+      "pattern": "(?:[ .([-]|^)(\\d{1,3}(?:[ .]?[,&+~][ .]?\\d{1,3})+)(?:[ .)\\]-]|$)",
       "flags": 2,
       "transform": "range_func"
     },
@@ -3073,7 +3073,7 @@
         "remove": false
       },
       "kind": "regex",
-      "pattern": "(?<!(?:seasons?|[Сс]езони?)\\W*)(?:[ .([-]|^)(\\d{1,3}(?:-\\d{1,3})+)(?:[ .)(\\]]|-\\D|$)",
+      "pattern": "(?:[ .([-]|^)(\\d{1,3}(?:-\\d{1,3})+)(?:[ .)(\\]]|-\\D|$)",
       "flags": 2,
       "transform": "range_func"
     },
@@ -3734,7 +3734,7 @@
         "remove": false
       },
       "kind": "regex",
-      "pattern": "\\b(?<=[ .,/-]+(?:[A-Z]{2}[ .,/-]+){2,})es\\b",
+      "pattern": "\\bes\\b",
       "flags": 2,
       "transform": "uniq_concat(value('es'))"
     },
@@ -3747,7 +3747,7 @@
         "remove": false
       },
       "kind": "regex",
-      "pattern": "\\b(?<=[ .,/-]+[A-Z]{2}[ .,/-]+)es(?=[ .,/-]+[A-Z]{2}[ .,/-]+)\\b",
+      "pattern": "\\bes(?=[ .,/-]+[A-Z]{2}[ .,/-]+)\\b",
       "flags": 2,
       "transform": "uniq_concat(value('es'))"
     },
@@ -3942,7 +3942,7 @@
         "remove": false
       },
       "kind": "regex",
-      "pattern": "\\b(?<!w{3}\\.\\w+\\.)IT(?=[ .,/-]+(?:[a-zA-Z]{2}[ .,/-]+){2,})\\b",
+      "pattern": "\\bIT(?=[ .,/-]+(?:[a-zA-Z]{2}[ .,/-]+){2,})\\b",
       "flags": 0,
       "transform": "uniq_concat(value('it'))"
     },
@@ -4020,7 +4020,7 @@
         "remove": false
       },
       "kind": "regex",
-      "pattern": "\\b(?<=[ .,/-]+(?:[A-Z]{2}[ .,/-]+){2,})de\\b",
+      "pattern": "\\bde\\b",
       "flags": 2,
       "transform": "uniq_concat(value('de'))"
     },
@@ -4033,7 +4033,7 @@
         "remove": false
       },
       "kind": "regex",
-      "pattern": "\\b(?<=[ .,/-]+[A-Z]{2}[ .,/-]+)de(?=[ .,/-]+[A-Z]{2}[ .,/-]+)\\b",
+      "pattern": "\\bde(?=[ .,/-]+[A-Z]{2}[ .,/-]+)\\b",
       "flags": 2,
       "transform": "uniq_concat(value('de'))"
     },
@@ -4137,7 +4137,7 @@
         "remove": true
       },
       "kind": "regex",
-      "pattern": "\\b(?:(?<!w{3}\\.\\w+\\.)tel(?!\\W*aviv)|telugu)\\b",
+      "pattern": "\\b(?:tel(?!\\W*aviv)|telugu)\\b",
       "flags": 2,
       "transform": "uniq_concat(value('te'))"
     },
@@ -4163,7 +4163,7 @@
         "remove": true
       },
       "kind": "regex",
-      "pattern": "\\b(?:(?<!w{3}\\.\\w+\\.)MAL(?:ay)?|malayalam)\\b",
+      "pattern": "\\b(?:MAL(?:ay)?|malayalam)\\b",
       "flags": 2,
       "transform": "uniq_concat(value('ml'))"
     },
@@ -4176,7 +4176,7 @@
         "remove": true
       },
       "kind": "regex",
-      "pattern": "\\b(?:(?<!w{3}\\.\\w+\\.)KAN(?:nada)?|kannada)\\b",
+      "pattern": "\\b(?:KAN(?:nada)?|kannada)\\b",
       "flags": 2,
       "transform": "uniq_concat(value('kn'))"
     },
@@ -4189,7 +4189,7 @@
         "remove": false
       },
       "kind": "regex",
-      "pattern": "\\b(?:(?<!w{3}\\.\\w+\\.)MAR(?:a(?:thi)?)?|marathi)\\b",
+      "pattern": "\\b(?:MAR(?:a(?:thi)?)?|marathi)\\b",
       "flags": 2,
       "transform": "uniq_concat(value('mr'))"
     },
@@ -4202,7 +4202,7 @@
         "remove": false
       },
       "kind": "regex",
-      "pattern": "\\b(?:(?<!w{3}\\.\\w+\\.)GUJ(?:arati)?|gujarati)\\b",
+      "pattern": "\\b(?:GUJ(?:arati)?|gujarati)\\b",
       "flags": 2,
       "transform": "uniq_concat(value('gu'))"
     },
@@ -4215,7 +4215,7 @@
         "remove": false
       },
       "kind": "regex",
-      "pattern": "\\b(?:(?<!w{3}\\.\\w+\\.)PUN(?:jabi)?|punjabi)\\b",
+      "pattern": "\\b(?:PUN(?:jabi)?|punjabi)\\b",
       "flags": 2,
       "transform": "uniq_concat(value('pa'))"
     },
@@ -4228,7 +4228,7 @@
         "remove": false
       },
       "kind": "regex",
-      "pattern": "\\b(?:(?<!w{3}\\.\\w+\\.)BEN(?!.\\bThe|and|of\\b)(?:gali)?|bengali)\\b",
+      "pattern": "\\b(?:BEN(?!.\\bThe|and|of\\b)(?:gali)?|bengali)\\b",
       "flags": 2,
       "transform": "uniq_concat(value('bn'))"
     },
@@ -4293,7 +4293,7 @@
         "remove": false
       },
       "kind": "regex",
-      "pattern": "\\b(?:(?<!w{3}\\.\\w+\\.)PL|pol)\\b",
+      "pattern": "\\b(?:PL|pol)\\b",
       "flags": 2,
       "transform": "uniq_concat(value('pl'))"
     },
@@ -4488,7 +4488,7 @@
         "remove": false
       },
       "kind": "regex",
-      "pattern": "\\b(?:(?<!w{3}\\.\\w+\\.)NL|dut|holand[eê]s)\\b",
+      "pattern": "\\b(?:NL|dut|holand[eê]s)\\b",
       "flags": 2,
       "transform": "uniq_concat(value('nl'))"
     },
@@ -4566,7 +4566,7 @@
         "remove": false
       },
       "kind": "regex",
-      "pattern": "\\b(?:(?<!w{3}\\.\\w+\\.|Sci-)FI|finsk|finsub|nordic)\\b",
+      "pattern": "\\b(?:FI|finsk|finsub|nordic)\\b",
       "flags": 2,
       "transform": "uniq_concat(value('fi'))"
     },
@@ -4592,7 +4592,7 @@
         "remove": false
       },
       "kind": "regex",
-      "pattern": "\\b(?:(?<!w{3}\\.\\w+\\.)SE|swe|swesubs?|sv(?:ensk)?|nordic)\\b",
+      "pattern": "\\b(?:SE|swe|swesubs?|sv(?:ensk)?|nordic)\\b",
       "flags": 2,
       "transform": "uniq_concat(value('sv'))"
     },
@@ -4761,7 +4761,7 @@
         "remove": false
       },
       "kind": "regex",
-      "pattern": "\\b(?:malay|may(?=[\\]_)]?\\.\\w{2,4}$)|(?<=subs?\\([a-z,]+)may)\\b",
+      "pattern": "\\b(?:malay|may(?=[\\]_)]?\\.\\w{2,4}$)|may)\\b",
       "flags": 2,
       "transform": "uniq_concat(value('ms'))"
     },
