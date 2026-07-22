@@ -7,6 +7,9 @@
 - Python: `3.13.12`
 - Rust: `1.92.0`
 - uv: `0.11.19`
+- Upstream PTT: `88429bb90acef55673f421f45038878809b1e577`
+- Upstream RTN: `bdb9973109eb489be831af0c39bdf9c27e3378ed`
+- This repo: `233f8d1a66e231791400da359960bcb5752fbf47`
 
 ## Python API: upstream vs this repo
 
@@ -14,14 +17,14 @@ Source data: [`python_vs_rust_2026-07-22.csv`](python_vs_rust_2026-07-22.csv). E
 
 | Parser | N | Upstream (items/s) | Rust port (items/s) | Speedup | Upstream p50 (ms) | Rust p50 (ms) | Upstream p95 (ms) | Rust p95 (ms) |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| `PTT.parse_title` | 1,000 | 1,863.9 | 12,323.7 | 6.61x | 0.544 | 0.082 | 0.566 | 0.091 |
-| `RTN.parse` | 1,000 | 1,745.1 | 10,118.4 | 5.80x | 0.577 | 0.099 | 0.617 | 0.110 |
-| `PTT.parse_title` | 10,000 | 1,829.5 | 12,118.0 | 6.62x | 0.550 | 0.082 | 0.585 | 0.093 |
-| `RTN.parse` | 10,000 | 1,718.0 | 9,934.2 | 5.78x | 0.585 | 0.101 | 0.622 | 0.112 |
-| `PTT.parse_title` | 30,000 | 1,823.9 | 12,171.5 | 6.67x | 0.553 | 0.083 | 0.582 | 0.092 |
-| `RTN.parse` | 30,000 | 1,716.0 | 9,872.3 | 5.75x | 0.587 | 0.102 | 0.619 | 0.113 |
+| `PTT.parse_title` | 1,000 | 1,788.9 | 14,024.8 | 7.84x | 0.565 | 0.071 | 0.592 | 0.082 |
+| `RTN.parse` | 1,000 | 1,680.0 | 11,654.1 | 6.94x | 0.600 | 0.086 | 0.632 | 0.097 |
+| `PTT.parse_title` | 10,000 | 1,791.9 | 13,852.4 | 7.73x | 0.560 | 0.071 | 0.607 | 0.085 |
+| `RTN.parse` | 10,000 | 1,663.2 | 11,592.2 | 6.97x | 0.602 | 0.086 | 0.658 | 0.099 |
+| `PTT.parse_title` | 30,000 | 1,825.2 | 14,327.4 | 7.85x | 0.550 | 0.070 | 0.588 | 0.080 |
+| `RTN.parse` | 30,000 | 1,714.4 | 11,656.6 | 6.80x | 0.586 | 0.085 | 0.626 | 0.098 |
 
-Geometric mean throughput speedup (all rows): **6.19x**.
+Geometric mean throughput speedup (all rows): **7.34x** (**7.81x** for PTT and **6.90x** for RTN).
 
 ## Rust native core (Criterion mean time)
 

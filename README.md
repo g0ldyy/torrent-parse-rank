@@ -101,11 +101,11 @@ Both variants rebuild the optimized native extension before running Python tests
 
 ## Benchmarks
 
-Python API speedup vs upstream (`PTT` + `RTN`): **~6.19x** geometric-mean throughput.
+Python API speedup vs upstream (`PTT` + `RTN`): **~7.34x** geometric-mean throughput.
 
 | Parser (N=30,000) | Upstream Python (items/s) | Rust port (items/s) | Speedup | Upstream p50 (ms) | Rust p50 (ms) |
 |---|---:|---:|---:|---:|---:|
-| `PTT.parse_title` | 1,823.9 | 12,171.5 | 6.67x | 0.553 | 0.083 |
-| `RTN.parse` | 1,716.0 | 9,872.3 | 5.75x | 0.587 | 0.102 |
+| `PTT.parse_title` | 1,825.2 | 14,327.4 | 7.85x | 0.550 | 0.070 |
+| `RTN.parse` | 1,714.4 | 11,656.6 | 6.80x | 0.586 | 0.085 |
 
 Full benchmark report: [`benchmarks/README.md`](benchmarks/README.md)
