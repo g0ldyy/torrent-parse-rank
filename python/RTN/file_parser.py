@@ -4,12 +4,16 @@ from fractions import Fraction
 from pathlib import Path
 
 import orjson
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 FFPROBE_TIMEOUT_SECONDS = 30
 
 
-class VideoTrack(BaseModel):
+class _StrictMediaModel(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True, validate_default=True)
+
+
+class VideoTrack(_StrictMediaModel):
     """Model representing video track metadata"""
 
     codec: str = Field(default="", description="Codec of the video track")
@@ -17,8 +21,22 @@ class VideoTrack(BaseModel):
     height: int = Field(default=0, description="Height of the video track")
     frame_rate: float = Field(default=0.0, description="Frame rate of the video track")
 
+    @field_validator("width", "height", mode="before")
+    @classmethod
+    def validate_dimensions(cls, value):
+        if type(value) is not int or value < 0:
+            raise ValueError("video dimensions must be non-negative integers")
+        return value
 
-class AudioTrack(BaseModel):
+    @field_validator("frame_rate", mode="before")
+    @classmethod
+    def validate_frame_rate(cls, value):
+        if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
+            raise ValueError("frame_rate must be a finite non-negative number")
+        return value
+
+
+class AudioTrack(_StrictMediaModel):
     """Model representing audio track metadata"""
 
     codec: str = Field(default="", description="Codec of the audio track")
@@ -26,15 +44,22 @@ class AudioTrack(BaseModel):
     sample_rate: int = Field(default=0, description="Sample rate of the audio track")
     language: str = Field(default="", description="Language of the audio track")
 
+    @field_validator("channels", "sample_rate", mode="before")
+    @classmethod
+    def validate_audio_numbers(cls, value):
+        if type(value) is not int or value < 0:
+            raise ValueError("audio values must be non-negative integers")
+        return value
 
-class SubtitleTrack(BaseModel):
+
+class SubtitleTrack(_StrictMediaModel):
     """Model representing subtitle track metadata"""
 
     codec: str = Field(default="", description="Codec of the subtitle track")
     language: str = Field(default="", description="Language of the subtitle track")
 
 
-class MediaMetadata(BaseModel):
+class MediaMetadata(_StrictMediaModel):
     """Model representing complete media file metadata"""
 
     filename: str = Field(default="", description="Name of the media file")
@@ -47,6 +72,27 @@ class MediaMetadata(BaseModel):
     subtitles: list[SubtitleTrack] = Field(
         default_factory=list, description="Subtitles in the video"
     )
+
+    @field_validator("file_size", "bitrate", mode="before")
+    @classmethod
+    def validate_media_integers(cls, value):
+        if type(value) is not int or value < 0:
+            raise ValueError("media integers must be non-negative")
+        return value
+
+    @field_validator("duration", mode="before")
+    @classmethod
+    def validate_duration(cls, value):
+        if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
+            raise ValueError("duration must be a finite non-negative number")
+        return value
+
+    @field_validator("format", mode="before")
+    @classmethod
+    def validate_formats(cls, value):
+        if type(value) is not list or any(type(item) is not str or not item for item in value):
+            raise ValueError("format must be a list of non-empty strings")
+        return value
 
     @property
     def size_in_mb(self) -> float:
@@ -76,7 +122,7 @@ def _parse_frame_rate(frame_rate: object) -> float:
             parsed = float(Fraction(frame_rate_text))
         else:
             parsed = float(frame_rate_text)
-        return parsed if math.isfinite(parsed) else 0.0
+        return parsed if math.isfinite(parsed) and parsed >= 0 else 0.0
     except (OverflowError, TypeError, ValueError, ZeroDivisionError):
         return 0.0
 
@@ -85,7 +131,8 @@ def _safe_int(value: object, default: int = 0) -> int:
     try:
         if value is None or isinstance(value, bool):
             return default
-        return int(value)
+        parsed = int(value)
+        return parsed if parsed >= 0 else default
     except (TypeError, ValueError, OverflowError):
         return default
 
@@ -95,7 +142,7 @@ def _safe_float(value: object, default: float = 0.0) -> float:
         if value is None or isinstance(value, bool):
             return default
         parsed = float(value)
-        return parsed if math.isfinite(parsed) else default
+        return parsed if math.isfinite(parsed) and parsed >= 0 else default
     except (TypeError, ValueError, OverflowError):
         return default
 
@@ -171,7 +218,11 @@ def parse_media_file(file_path: str | Path) -> MediaMetadata:
         "filename": path.name,
         "file_size": _safe_int(format_info.get("size"), path.stat().st_size),
         "duration": round(_safe_float(format_info.get("duration")), 2),
-        "format": format_name.split(",") if isinstance(format_name, str) else [],
+        "format": (
+            [item for item in format_name.split(",") if item]
+            if isinstance(format_name, str)
+            else []
+        ),
         "bitrate": _safe_int(format_info.get("bit_rate")),
     }
 
