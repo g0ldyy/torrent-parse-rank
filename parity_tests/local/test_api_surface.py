@@ -7,6 +7,7 @@ import regex
 from PTT import adult, anime, cli, handlers, parse, transformers
 from pydantic_core import PydanticSerializationError
 from RTN import (
+    BaseRankingModel,
     DefaultRanking,
     ParsedData,
     Resolution,
@@ -28,6 +29,16 @@ from RTN._native_bridge import data_to_json, rank_model_to_json, settings_to_jso
 from RTN.fetch import populate_langs
 from RTN.models import LanguagesConfig
 from RTN.patterns import _compile_patterns
+from RTN.ranker import (
+    calculate_audio_rank,
+    calculate_channels_rank,
+    calculate_codec_rank,
+    calculate_extra_ranks,
+    calculate_hdr_rank,
+    calculate_preferred,
+    calculate_preferred_langs,
+    calculate_quality_rank,
+)
 from torrent_parse_rank_native import _native
 
 
@@ -374,11 +385,47 @@ def test_settings_and_ranking_reject_unknown_or_coerced_values():
         lambda: SettingsModel(custom_ranks={"quality": {"remux": {"rank": True}}}),
         lambda: DefaultRanking(remux=True),
         lambda: DefaultRanking(legacy=1),
+        lambda: BaseRankingModel(remux=True),
+        lambda: BaseRankingModel(legacy=1),
     ]
 
     for factory in invalid_factories:
         with pytest.raises(ValueError):
             factory()
+
+
+@pytest.mark.parametrize(
+    "rank_function,needs_rank_model",
+    [
+        (get_rank, True),
+        (calculate_preferred, False),
+        (calculate_preferred_langs, False),
+        (calculate_quality_rank, True),
+        (calculate_codec_rank, True),
+        (calculate_hdr_rank, True),
+        (calculate_audio_rank, True),
+        (calculate_channels_rank, True),
+        (calculate_extra_ranks, True),
+    ],
+)
+def test_rank_functions_enforce_current_model_boundaries(rank_function, needs_rank_model):
+    data = ParsedData(raw_title="Movie.2026")
+    settings = SettingsModel()
+    rank_model = DefaultRanking()
+
+    valid_args = (data, settings, rank_model) if needs_rank_model else (data, settings)
+    assert type(rank_function(*valid_args)) is int
+
+    invalid_calls = [
+        (object(), settings, rank_model) if needs_rank_model else (object(), settings),
+        (data, object(), rank_model) if needs_rank_model else (data, object()),
+    ]
+    if needs_rank_model:
+        invalid_calls.append((data, settings, object()))
+
+    for args in invalid_calls:
+        with pytest.raises(TypeError):
+            rank_function(*args)
 
 
 def test_check_pattern_preserves_pattern_semantics_and_list_mutation():

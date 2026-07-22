@@ -346,6 +346,8 @@ class BaseRankingModel(BaseModel):
     telecine: int = 0
     telesync: int = 0
 
+    model_config = ConfigDict(extra="forbid", strict=True, validate_default=True)
+
 
 class DefaultRanking(BaseRankingModel):
     """Ranking model preset that covers the highest qualities like 4K HDR."""

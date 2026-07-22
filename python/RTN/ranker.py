@@ -25,12 +25,25 @@ def _assert_parsed_data(data: ParsedData) -> None:
         raise ValueError("Parsed data cannot be empty.")
 
 
+def _validate_rank_inputs(
+    data: ParsedData,
+    settings: SettingsModel,
+    rank_model: BaseRankingModel | None = None,
+) -> None:
+    _assert_parsed_data(data)
+    if not isinstance(settings, SettingsModel):
+        raise TypeError("Settings must be an instance of SettingsModel.")
+    if rank_model is not None and not isinstance(rank_model, BaseRankingModel):
+        raise TypeError("Rank model must be an instance of BaseRankingModel.")
+
+
 def _call_rank_native(
     native_fn: Callable[..., int],
     data: ParsedData,
     settings: SettingsModel,
     rank_model: BaseRankingModel | None = None,
 ) -> int:
+    _validate_rank_inputs(data, settings, rank_model)
     if rank_model is None:
         data_json, settings_json = data_settings_to_json(data, settings)
         return int(native_fn(data_json, settings_json))
@@ -51,7 +64,6 @@ def _make_rank_component(
 
 
 def get_rank(data: ParsedData, settings: SettingsModel, rank_model: BaseRankingModel) -> int:
-    _assert_parsed_data(data)
     return _call_rank_native(rtn_get_rank, data, settings, rank_model)
 
 
