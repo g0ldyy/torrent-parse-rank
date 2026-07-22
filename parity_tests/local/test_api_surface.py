@@ -5,6 +5,7 @@ import PTT
 import pytest
 import regex
 from PTT import adult, anime, cli, handlers, parse, transformers
+from pydantic_core import PydanticSerializationError
 from RTN import (
     DefaultRanking,
     Resolution,
@@ -21,7 +22,7 @@ from RTN import (
     title_match,
 )
 from RTN import parse as rtn_parse
-from RTN._native_bridge import data_to_json, rank_model_to_json
+from RTN._native_bridge import data_to_json, rank_model_to_json, settings_to_json
 from RTN.fetch import populate_langs
 from RTN.models import LanguagesConfig
 from RTN.patterns import _compile_patterns
@@ -273,6 +274,30 @@ def test_direct_model_json_matches_current_native_payloads():
     assert orjson.loads(rank_model_to_json(ranking)) == ranking.model_dump(
         mode="json", by_alias=True
     )
+
+
+def test_native_settings_payload_preserves_pattern_flags_without_changing_public_json():
+    settings = SettingsModel(
+        require=["WEB.?DL", "/CaseSensitive/"],
+        exclude=["CAM"],
+        preferred=["REMUX"],
+    )
+
+    native = orjson.loads(settings_to_json(settings))
+    assert native["require"] == [
+        {"pattern": "WEB.?DL", "ignore_case": True},
+        {"pattern": "CaseSensitive", "ignore_case": False},
+    ]
+    assert orjson.loads(settings.model_dump_json())["require"] == [
+        "WEB.?DL",
+        "CaseSensitive",
+    ]
+
+    settings.require.append(None)
+    assert orjson.loads(settings_to_json(settings))["require"][-1] is None
+    settings.require.append(1)
+    with pytest.raises(PydanticSerializationError, match="Unsupported pattern item type"):
+        settings_to_json(settings)
 
 
 def test_populated_language_groups_are_deterministically_ordered():

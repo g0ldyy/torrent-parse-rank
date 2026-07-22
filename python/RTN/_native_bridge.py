@@ -1,10 +1,7 @@
-from collections.abc import Iterable
 from typing import Any
 
 import orjson
 import regex
-
-_PATTERN_FIELDS = ("require", "exclude", "preferred")
 
 
 def _dumps(payload: Any) -> str:
@@ -24,10 +21,6 @@ def _serialize_pattern_item(item: Any) -> dict[str, Any] | None:
     raise TypeError(f"Unsupported pattern item type: {type(item)}")
 
 
-def _serialize_pattern_list(items: Iterable[Any]) -> list[dict[str, Any] | None]:
-    return [_serialize_pattern_item(item) for item in items]
-
-
 def pattern_list_key(items: list[Any]) -> tuple[tuple[str, bool] | None, ...]:
     key = []
     for item in items:
@@ -45,10 +38,10 @@ def pattern_key_to_json(items: tuple[tuple[str, bool] | None, ...]) -> str:
 
 
 def settings_to_json(settings: Any) -> str:
-    payload = settings.model_dump(mode="json", by_alias=True)
-    for field in _PATTERN_FIELDS:
-        payload[field] = _serialize_pattern_list(getattr(settings, field, ()))
-    return _dumps(payload)
+    return settings.model_dump_json(
+        by_alias=True,
+        context={"native_pattern_objects": True},
+    )
 
 
 def data_to_json(data: Any) -> str:

@@ -27,6 +27,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    FieldSerializationInfo,
     field_serializer,
     field_validator,
     model_validator,
@@ -652,8 +653,27 @@ class SettingsModel(BaseModel):
         return values
 
     @field_serializer("require", "exclude", "preferred", when_used="always")
-    def serialize_patterns(self, values: list[PatternType]) -> list[str]:
+    def serialize_patterns(
+        self, values: list[PatternType], info: FieldSerializationInfo
+    ) -> list[Any]:
         """Convert regex patterns to strings for JSON serialization."""
+        if info.context and info.context.get("native_pattern_objects"):
+            native_values = []
+            for value in values:
+                if value is None:
+                    native_values.append(None)
+                elif isinstance(value, regex.Pattern):
+                    native_values.append(
+                        {
+                            "pattern": value.pattern,
+                            "ignore_case": bool(value.flags & regex.IGNORECASE),
+                        }
+                    )
+                elif isinstance(value, str):
+                    native_values.append({"pattern": value, "ignore_case": True})
+                else:
+                    raise TypeError(f"Unsupported pattern item type: {type(value)}")
+            return native_values
         return [v.pattern if isinstance(v, regex.Pattern) else v for v in values]
 
     def __getitem__(self, item: str) -> CustomRankDict:
