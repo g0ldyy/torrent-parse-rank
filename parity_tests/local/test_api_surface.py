@@ -12,6 +12,7 @@ from RTN import (
     check_fetch_and_rank_many,
     check_pattern,
     get_rank,
+    normalize_title,
 )
 from RTN import parse as rtn_parse
 from RTN.patterns import _compile_patterns
@@ -216,3 +217,8 @@ def test_check_pattern_reuses_compiled_native_patterns():
     cache = _compile_patterns.cache_info()
     assert cache.misses == 1
     assert cache.hits == 1
+
+
+def test_normalize_title_preserves_trimmed_and_untrimmed_results():
+    assert normalize_title("The.Matrix") == "the matrix"
+    assert normalize_title("  Amélie & Friends  ") == "amelie and friends"

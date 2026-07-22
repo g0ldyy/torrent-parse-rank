@@ -245,7 +245,11 @@ pub fn normalize_title(raw_title: &str, lower: bool) -> String {
         }
     }
 
-    cleaned.trim().to_string()
+    if cleaned.trim().len() == cleaned.len() {
+        cleaned
+    } else {
+        cleaned.trim().to_owned()
+    }
 }
 
 fn compile_pattern(pattern_value: &Value) -> Result<Option<fancy_regex::Regex>, RtnError> {
