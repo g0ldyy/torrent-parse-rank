@@ -7,13 +7,13 @@ use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
 use rtn_core::{
-    RtnError, adult_handler, calculate_audio_rank, calculate_channels_rank, calculate_codec_rank,
-    calculate_extra_ranks, calculate_hdr_rank, calculate_preferred, calculate_preferred_langs,
-    calculate_quality_rank, check_exclude, check_fetch, check_fetch_and_rank_many, check_required,
-    episodes_from_season, extract_episodes, extract_seasons, fetch_audio, fetch_codec, fetch_hdr,
-    fetch_other, fetch_quality, fetch_resolution, get_lev_ratio, get_rank, language_handler,
-    normalize_title, parse, parse_json_object, parse_json_value, populate_lang_sets, title_match,
-    trash_handler,
+    CompiledPatterns, RtnError, adult_handler, calculate_audio_rank, calculate_channels_rank,
+    calculate_codec_rank, calculate_extra_ranks, calculate_hdr_rank, calculate_preferred,
+    calculate_preferred_langs, calculate_quality_rank, check_exclude, check_fetch,
+    check_fetch_and_rank_many, check_required, episodes_from_season, extract_episodes,
+    extract_seasons, fetch_audio, fetch_codec, fetch_hdr, fetch_other, fetch_quality,
+    fetch_resolution, get_lev_ratio, get_rank, language_handler, normalize_title, parse,
+    parse_json_object, parse_json_value, populate_lang_sets, title_match, trash_handler,
 };
 use serde_json::{Map, Value};
 
@@ -184,14 +184,28 @@ fn rtn_normalize_title(raw_title: &str, lower: bool) -> String {
     normalize_title(raw_title, lower)
 }
 
-#[pyfunction]
-fn rtn_check_pattern(patterns_json: &str, raw_title: &str) -> PyResult<bool> {
-    let patterns = parse_json_value(patterns_json, "patterns_json").map_err(to_py_value_error)?;
-    let arr = patterns
-        .as_array()
-        .cloned()
-        .ok_or_else(|| PyValueError::new_err("patterns_json must be a JSON array."))?;
-    rtn_core::check_pattern(&arr, raw_title).map_err(to_py_value_error)
+#[pyclass(frozen, name = "_RtnPatternSet")]
+struct RtnPatternSet {
+    patterns: CompiledPatterns,
+}
+
+#[pymethods]
+impl RtnPatternSet {
+    #[new]
+    fn new(patterns_json: &str) -> PyResult<Self> {
+        let patterns =
+            match parse_json_value(patterns_json, "patterns_json").map_err(to_py_value_error)? {
+                Value::Array(patterns) => patterns,
+                _ => return Err(PyValueError::new_err("patterns_json must be a JSON array.")),
+            };
+        Ok(Self {
+            patterns: CompiledPatterns::new(&patterns),
+        })
+    }
+
+    fn is_match(&self, raw_title: &str) -> PyResult<bool> {
+        self.patterns.is_match(raw_title).map_err(to_py_value_error)
+    }
 }
 
 #[pyfunction]
@@ -347,7 +361,7 @@ fn _native(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     m.add_function(wrap_pyfunction!(rtn_parse, m)?)?;
     m.add_function(wrap_pyfunction!(rtn_normalize_title, m)?)?;
-    m.add_function(wrap_pyfunction!(rtn_check_pattern, m)?)?;
+    m.add_class::<RtnPatternSet>()?;
     m.add_function(wrap_pyfunction!(rtn_get_lev_ratio, m)?)?;
     m.add_function(wrap_pyfunction!(rtn_title_match, m)?)?;
     m.add_function(wrap_pyfunction!(rtn_extract_seasons, m)?)?;

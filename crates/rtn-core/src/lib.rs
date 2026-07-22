@@ -275,14 +275,43 @@ fn compile_pattern(pattern_value: &Value) -> Result<Option<fancy_regex::Regex>, 
 }
 
 pub fn check_pattern(patterns: &[Value], raw_title: &str) -> Result<bool, RtnError> {
-    for pattern in patterns {
-        if let Some(re) = compile_pattern(pattern)?
-            && re.is_match(raw_title)?
-        {
-            return Ok(true);
-        }
+    CompiledPatterns::new(patterns).is_match(raw_title)
+}
+
+pub struct CompiledPatterns {
+    entries: Vec<CompiledPattern>,
+}
+
+enum CompiledPattern {
+    Regex(fancy_regex::Regex),
+    Error(String),
+}
+
+impl CompiledPatterns {
+    pub fn new(patterns: &[Value]) -> Self {
+        let entries = patterns
+            .iter()
+            .filter_map(|pattern| match compile_pattern(pattern) {
+                Ok(Some(regex)) => Some(CompiledPattern::Regex(regex)),
+                Ok(None) => None,
+                Err(error) => Some(CompiledPattern::Error(error.to_string())),
+            })
+            .collect();
+        Self { entries }
     }
-    Ok(false)
+
+    pub fn is_match(&self, raw_title: &str) -> Result<bool, RtnError> {
+        for entry in &self.entries {
+            match entry {
+                CompiledPattern::Regex(regex) if regex.is_match(raw_title)? => return Ok(true),
+                CompiledPattern::Regex(_) => {}
+                CompiledPattern::Error(error) => {
+                    return Err(RtnError::InvalidInput(error.clone()));
+                }
+            }
+        }
+        Ok(false)
+    }
 }
 
 struct PreparedPattern {

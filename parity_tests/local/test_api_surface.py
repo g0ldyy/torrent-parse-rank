@@ -10,9 +10,11 @@ from RTN import (
     check_fetch,
     check_fetch_and_rank,
     check_fetch_and_rank_many,
+    check_pattern,
     get_rank,
 )
 from RTN import parse as rtn_parse
+from RTN.patterns import _compile_patterns
 
 
 def test_api_modules_and_symbols_present():
@@ -188,3 +190,29 @@ def test_settings_pattern_round_trip_preserves_case_sensitivity(tmp_path: Path):
 def test_settings_reject_scalar_pattern_configuration():
     with pytest.raises(ValueError, match="list or tuple"):
         SettingsModel(require="silently-dropped-before")
+
+
+def test_check_pattern_preserves_pattern_semantics_and_list_mutation():
+    patterns = [None, regex.compile("HDR", regex.IGNORECASE)]
+    assert check_pattern(patterns, "hdr")
+
+    patterns[1] = regex.compile("DV")
+    assert check_pattern(patterns, "DV")
+    assert not check_pattern(patterns, "dv")
+    assert check_pattern(["HDR"], "hdr")
+    assert check_pattern(["HDR", "("], "HDR")
+
+    with pytest.raises(ValueError):
+        check_pattern(["("], "title")
+
+
+def test_check_pattern_reuses_compiled_native_patterns():
+    _compile_patterns.cache_clear()
+    patterns = [regex.compile("WEB.?DL", regex.IGNORECASE), "REMUX"]
+
+    assert check_pattern(patterns, "Movie.WEB-DL")
+    assert check_pattern(patterns, "Movie.REMUX")
+
+    cache = _compile_patterns.cache_info()
+    assert cache.misses == 1
+    assert cache.hits == 1

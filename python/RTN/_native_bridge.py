@@ -28,8 +28,20 @@ def _serialize_pattern_list(items: Iterable[Any]) -> list[dict[str, Any] | None]
     return [_serialize_pattern_item(item) for item in items]
 
 
-def pattern_list_to_json(items: list[Any]) -> str:
-    return _dumps(_serialize_pattern_list(items))
+def pattern_list_key(items: list[Any]) -> tuple[tuple[str, bool] | None, ...]:
+    key = []
+    for item in items:
+        serialized = _serialize_pattern_item(item)
+        key.append(
+            None if serialized is None else (serialized["pattern"], serialized["ignore_case"])
+        )
+    return tuple(key)
+
+
+def pattern_key_to_json(items: tuple[tuple[str, bool] | None, ...]) -> str:
+    return _dumps(
+        [None if item is None else {"pattern": item[0], "ignore_case": item[1]} for item in items]
+    )
 
 
 def settings_to_json(settings: Any) -> str:
