@@ -220,6 +220,45 @@ def test_native_json_boundaries_require_current_object_roots_and_titles():
             call()
 
 
+def test_parsed_data_uses_one_strict_current_schema():
+    parsed = rtn_parse("Movie.2026.3D.1080p.WEB-DL")
+
+    assert parsed._3d is True
+    assert parsed.model_dump(mode="json", by_alias=True)["_3d"] is True
+
+    malformed = [
+        {"raw_title": "Movie.2026", "title": "legacy intermediate"},
+        {"raw_title": "Movie.2026", "trash": 1},
+        {"raw_title": "Movie.2026", "seasons": [True]},
+        {"raw_title": ""},
+    ]
+    for payload in malformed:
+        with pytest.raises(ValueError):
+            ParsedData.model_validate(payload)
+
+
+def test_torrent_uses_one_strict_current_schema():
+    parsed = ParsedData(raw_title="Movie.2026")
+    valid = {
+        "infohash": "a" * 40,
+        "raw_title": "Movie.2026",
+        "data": parsed,
+    }
+
+    malformed = [
+        {**valid, "legacy": True},
+        {**valid, "fetch": 1},
+        {**valid, "seeders": True},
+        {**valid, "leechers": -1},
+        {**valid, "trackers": [""]},
+        {**valid, "lev_ratio": float("nan")},
+        {**valid, "lev_ratio": 1.1},
+    ]
+    for payload in malformed:
+        with pytest.raises(ValueError):
+            Torrent.model_validate(payload)
+
+
 def test_combined_fetch_and_rank_matches_individual_calls():
     data = rtn_parse("Oppenheimer.2023.2160p.REMUX.DV.HDR10Plus.TrueHD.7.1.HEVC")
     settings = SettingsModel()

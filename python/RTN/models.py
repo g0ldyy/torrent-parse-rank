@@ -97,7 +97,7 @@ class ParsedData(BaseModel):
     hardcoded: bool = False
     region: str | None = None
     ppv: bool = False
-    _3d: bool = False
+    three_d: bool = Field(default=False, alias="_3d")
     site: str | None = None
     size: str | None = None
     proper: bool = False
@@ -117,7 +117,19 @@ class ParsedData(BaseModel):
     torrent: bool = False
     scene: bool = False
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(extra="forbid", strict=True, validate_default=True)
+
+    @field_validator("raw_title", mode="before")
+    @classmethod
+    def validate_raw_title(cls, value):
+        if type(value) is not str or not value:
+            raise ValueError("raw_title must be a non-empty string")
+        return value
+
+    @property
+    def _3d(self) -> bool:
+        """Expose the canonical JSON `_3d` value as a Python attribute."""
+        return self.three_d
 
     @property
     def type(self) -> str:
@@ -185,16 +197,53 @@ class Torrent(BaseModel):
     rank: int = 0
     lev_ratio: float = 0.0
 
-    model_config = ConfigDict(from_attributes=True, frozen=True)
+    model_config = ConfigDict(
+        extra="forbid",
+        strict=True,
+        validate_default=True,
+        frozen=True,
+    )
 
-    @field_validator("infohash")
+    @field_validator("infohash", mode="before")
+    @classmethod
     def validate_infohash(cls, v):
         """Validates infohash length and format (MD5 or SHA-1)."""
-        if len(v) not in (32, 40) or not INFOHASH_PATTERN.match(v):
+        if type(v) is not str or not INFOHASH_PATTERN.fullmatch(v):
             raise GarbageTorrent(
                 "Infohash must be a 32-character MD5 hash or a 40-character SHA-1 hash."
             )
         return v
+
+    @field_validator("raw_title", mode="before")
+    @classmethod
+    def validate_torrent_raw_title(cls, value):
+        if type(value) is not str or not value:
+            raise ValueError("raw_title must be a non-empty string")
+        return value
+
+    @field_validator("seeders", "leechers", mode="before")
+    @classmethod
+    def validate_peer_count(cls, value):
+        if value is not None and (type(value) is not int or value < 0):
+            raise ValueError("peer counts must be non-negative integers or None")
+        return value
+
+    @field_validator("trackers", mode="before")
+    @classmethod
+    def validate_trackers(cls, value):
+        if value is not None and (
+            type(value) is not list
+            or any(type(tracker) is not str or not tracker for tracker in value)
+        ):
+            raise ValueError("trackers must be a list of non-empty strings or None")
+        return value
+
+    @field_validator("lev_ratio", mode="before")
+    @classmethod
+    def validate_lev_ratio(cls, value):
+        if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 1:
+            raise ValueError("lev_ratio must be a finite number between 0 and 1")
+        return value
 
     def __eq__(self, other: object) -> bool:
         """Compares Torrent objects based on their infohash."""

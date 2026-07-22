@@ -378,10 +378,14 @@ pub fn parse(raw_title: &str, translate_langs: bool) -> Result<Map<String, Value
     let mut data = parse_title(raw_title, translate_langs)?;
 
     let parsed_title = data
-        .get("title")
-        .and_then(Value::as_str)
+        .remove("title")
+        .and_then(|value| value.as_str().map(str::to_owned))
         .unwrap_or_default()
         .to_string();
+    let three_d = data
+        .remove("3d")
+        .and_then(|value| value.as_bool())
+        .unwrap_or(false);
 
     data.insert(
         "raw_title".to_string(),
@@ -395,7 +399,7 @@ pub fn parse(raw_title: &str, translate_langs: bool) -> Result<Map<String, Value
         "normalized_title".to_string(),
         Value::String(normalize_title(&parsed_title, true)),
     );
-    data.insert("_3d".to_string(), Value::Bool(map_bool(&data, "3d")));
+    data.insert("_3d".to_string(), Value::Bool(three_d));
 
     Ok(data)
 }
