@@ -19,6 +19,9 @@ Note:
 """
 
 import json
+import os
+import stat
+import tempfile
 from pathlib import Path
 from typing import Any, TypeAlias
 
@@ -37,6 +40,27 @@ from regex import Pattern
 from RTN.exceptions import GarbageTorrent
 
 INFOHASH_PATTERN: Pattern = regex.compile(r"^[a-fA-F0-9]{32}$|^[a-fA-F0-9]{40}$")
+
+
+def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
+    mode = stat.S_IMODE(path.stat().st_mode) if path.exists() else None
+    descriptor, temporary_name = tempfile.mkstemp(
+        dir=path.parent,
+        prefix=f".{path.name}.",
+        suffix=".tmp",
+    )
+    temporary_path = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as output:
+            json.dump(payload, output, indent=4)
+            output.flush()
+            os.fsync(output.fileno())
+        if mode is not None:
+            temporary_path.chmod(mode)
+        os.replace(temporary_path, path)
+    except BaseException:
+        temporary_path.unlink(missing_ok=True)
+        raise
 
 
 class ParsedData(BaseModel):
@@ -707,8 +731,7 @@ class SettingsModel(BaseModel):
                 for pattern in getattr(self, field)
             ]
 
-        with path.open("w", encoding="utf-8") as f:
-            json.dump(payload, f, indent=4)
+        _atomic_write_json(path, payload)
 
     @classmethod
     def load(cls, path: str | Path) -> "SettingsModel":

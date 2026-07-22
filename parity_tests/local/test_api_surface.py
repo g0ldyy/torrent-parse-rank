@@ -271,6 +271,35 @@ def test_settings_pattern_round_trip_preserves_case_sensitivity(tmp_path: Path):
     assert insensitive.search("INSENSITIVE")
 
 
+def test_settings_save_is_atomic_and_preserves_existing_file_on_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    path = tmp_path / "settings.json"
+    path.write_text("original", encoding="utf-8")
+    path.chmod(0o640)
+
+    def fail_replace(source, destination):
+        del source, destination
+        raise OSError("replace failed")
+
+    monkeypatch.setattr("RTN.models.os.replace", fail_replace)
+    with pytest.raises(OSError, match="replace failed"):
+        SettingsModel(name="updated").save(path)
+
+    assert path.read_text(encoding="utf-8") == "original"
+    assert path.stat().st_mode & 0o777 == 0o640
+    assert list(tmp_path.glob(".settings.json.*.tmp")) == []
+
+
+def test_add_defaults_rejects_non_parser_without_inert_marker():
+    parser = parse.Parser()
+    assert handlers.add_defaults(parser) is parser
+    assert not hasattr(parser, "_defaults_added")
+
+    with pytest.raises(TypeError, match="PTT Parser"):
+        handlers.add_defaults(object())
+
+
 def test_settings_reject_scalar_pattern_configuration():
     with pytest.raises(ValueError, match="list or tuple"):
         SettingsModel(require="silently-dropped-before")
