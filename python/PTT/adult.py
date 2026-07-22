@@ -1,10 +1,20 @@
 from functools import cache
 from pathlib import Path
 
+KEYWORD_FILENAMES = frozenset(
+    {
+        "combined-keywords.txt",
+        "short-adult-compound-words.txt",
+        "short-adult-words.txt",
+    }
+)
+
 
 @cache
 def load_adult_keywords(filename: str = "combined-keywords.txt") -> set[str]:
     """Load adult keywords from bundled keyword files."""
+    if type(filename) is not str or filename not in KEYWORD_FILENAMES:
+        raise ValueError("filename must name a bundled PTT keyword file")
     keywords_file = Path(__file__).parent / "keywords" / filename
     keywords = set()
 

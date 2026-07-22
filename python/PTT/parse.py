@@ -65,13 +65,22 @@ def extend_options(options: dict[str, Any] | None = None) -> dict[str, Any]:
     """
     Extend handler options with parser defaults.
     """
-    options = options or {}
+    if options is None:
+        options = {}
+    elif type(options) is not dict:
+        raise TypeError("handler options must be a dictionary or None")
+
     default_options = {
         "skipIfAlreadyFound": True,
         "skipFromTitle": False,
         "skipIfFirst": False,
         "remove": False,
     }
+    unknown = set(options) - (set(default_options) | {"value"})
+    if unknown:
+        raise ValueError(f"unknown handler options: {sorted(unknown)}")
+    if any(key in options and type(options[key]) is not bool for key in default_options):
+        raise TypeError("handler control options must be booleans")
     for key, value in default_options.items():
         options.setdefault(key, value)
     return options
@@ -181,7 +190,7 @@ class Parser:
             handler.handler_name = getattr(handler_name, "__name__", "unknown")
         elif isinstance(handler_name, str) and hasattr(handler, "search"):
             transformer = transformer if callable(transformer) else (lambda x, *_: x)
-            options = extend_options(options if isinstance(options, dict) else {})
+            options = extend_options(options)
             handler = create_handler_from_regexp(handler_name, handler, transformer, options)
         elif isinstance(handler_name, str) and callable(handler):
             handler.handler_name = handler_name

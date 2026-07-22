@@ -154,6 +154,28 @@ def test_adult_keyword_loading_and_helpers(tmp_path: Path):
     assert source.read_text(encoding="utf-8").splitlines() == ["a", "z"]
 
 
+def test_adult_keyword_loader_is_limited_to_owned_resources():
+    for filename in ("../pyproject.toml", "/etc/passwd", "unknown.txt", None):
+        with pytest.raises(ValueError, match="bundled PTT keyword"):
+            adult.load_adult_keywords(filename)
+
+
+def test_ptt_handler_configuration_uses_current_exact_schema():
+    assert anime.anime_handler(parse.Parser()) is not None
+    assert not hasattr(anime.anime_handler(parse.Parser()), "_anime_handler_added")
+    with pytest.raises(TypeError, match="PTT Parser"):
+        anime.anime_handler(object())
+
+    assert parse.extend_options(None)["remove"] is False
+    for options in ([], False, ""):
+        with pytest.raises(TypeError, match="dictionary"):
+            parse.extend_options(options)
+    with pytest.raises(TypeError, match="booleans"):
+        parse.extend_options({"remove": 1})
+    with pytest.raises(ValueError, match="unknown"):
+        parse.extend_options({"legacy": True})
+
+
 def test_cli_sort_by_count_is_strict_and_deterministic(tmp_path: Path):
     source = tmp_path / "counts.txt"
     source.write_text("z,2\na,10\nb,2\n", encoding="utf-8")
