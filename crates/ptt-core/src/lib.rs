@@ -462,7 +462,11 @@ impl ParserEngine {
         matched
             .entry(handler.name.clone())
             .or_insert_with(|| MatchInfo {
-                raw_match: raw_match.clone(),
+                raw_match: if matches!(handler.name.as_str(), "episodes" | "group") {
+                    raw_match.clone()
+                } else {
+                    String::new()
+                },
                 match_index: m0.start(),
             });
         result.insert(handler.name.clone(), transformed);
