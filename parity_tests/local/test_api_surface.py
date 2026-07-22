@@ -11,8 +11,11 @@ from RTN import (
     check_fetch_and_rank,
     check_fetch_and_rank_many,
     check_pattern,
+    episodes_from_season,
+    get_lev_ratio,
     get_rank,
     normalize_title,
+    title_match,
 )
 from RTN import parse as rtn_parse
 from RTN.patterns import _compile_patterns
@@ -222,3 +225,19 @@ def test_check_pattern_reuses_compiled_native_patterns():
 def test_normalize_title_preserves_trimmed_and_untrimmed_results():
     assert normalize_title("The.Matrix") == "the matrix"
     assert normalize_title("  Amélie & Friends  ") == "amelie and friends"
+
+
+@pytest.mark.parametrize("aliases", [[], "", False])
+def test_title_similarity_rejects_non_mapping_aliases(aliases):
+    with pytest.raises(TypeError, match="Aliases must be a dictionary or None"):
+        get_lev_ratio("Title", "Title", aliases=aliases)
+
+
+def test_title_similarity_rejects_boolean_threshold():
+    with pytest.raises(ValueError, match="threshold"):
+        title_match("Title", "Title", threshold=True)
+
+
+def test_episode_extraction_rejects_boolean_season():
+    with pytest.raises(TypeError, match="positive integer"):
+        episodes_from_season("Show.S01E01", True)

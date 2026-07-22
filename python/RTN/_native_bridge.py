@@ -69,4 +69,8 @@ def data_settings_rank_to_json(data: Any, settings: Any, rank_model: Any) -> tup
 
 
 def aliases_to_json(aliases: dict | None) -> str:
-    return _dumps(aliases or {})
+    if aliases is None:
+        return _dumps({})
+    if not isinstance(aliases, dict):
+        raise TypeError("Aliases must be a dictionary or None.")
+    return _dumps(aliases)

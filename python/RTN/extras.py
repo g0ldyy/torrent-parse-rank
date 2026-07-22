@@ -43,16 +43,25 @@ def _validate_raw_title(raw_title: str, exc_type: type[Exception] = TypeError) -
 
 
 def _validate_similarity_inputs(correct_title: str, parsed_title: str, threshold: float) -> None:
-    if not (correct_title and parsed_title):
+    if (
+        not isinstance(correct_title, str)
+        or not correct_title
+        or not isinstance(parsed_title, str)
+        or not parsed_title
+    ):
         raise ValueError("Both titles must be provided.")
-    if not isinstance(threshold, (int, float)) or not 0 <= threshold <= 1:
+    if (
+        isinstance(threshold, bool)
+        or not isinstance(threshold, (int, float))
+        or not 0 <= threshold <= 1
+    ):
         raise ValueError("The threshold must be a number between 0 and 1.")
 
 
 def _validate_season_number(season_num: int) -> None:
     if not season_num:
         raise ValueError("The season number must be provided.")
-    if not isinstance(season_num, int) or season_num <= 0:
+    if isinstance(season_num, bool) or not isinstance(season_num, int) or season_num <= 0:
         raise TypeError("The season number must be a positive integer.")
 
 
@@ -67,7 +76,7 @@ def title_match(
     aliases: dict | None = None,
 ) -> bool:
     _validate_similarity_inputs(correct_title, parsed_title, threshold)
-    return rtn_title_match(correct_title, parsed_title, threshold, aliases_to_json(aliases or {}))
+    return rtn_title_match(correct_title, parsed_title, threshold, aliases_to_json(aliases))
 
 
 def get_lev_ratio(
@@ -77,7 +86,7 @@ def get_lev_ratio(
     aliases: dict | None = None,
 ) -> float:
     _validate_similarity_inputs(correct_title, parsed_title, threshold)
-    return rtn_get_lev_ratio(correct_title, parsed_title, threshold, aliases_to_json(aliases or {}))
+    return rtn_get_lev_ratio(correct_title, parsed_title, threshold, aliases_to_json(aliases))
 
 
 def sort_torrents(
