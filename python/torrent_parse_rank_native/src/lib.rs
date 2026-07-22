@@ -62,10 +62,23 @@ fn parse_data_and_settings(
     data_json: &str,
     settings_json: &str,
 ) -> Result<(Map<String, Value>, Value), RtnError> {
-    Ok((
-        parse_json_object(data_json, "data_json")?,
-        parse_json_value(settings_json, "settings_json")?,
-    ))
+    let data = parse_json_object(data_json, "data_json")?;
+    validate_data_root(&data)?;
+    let settings = Value::Object(parse_json_object(settings_json, "settings_json")?);
+    Ok((data, settings))
+}
+
+fn validate_data_root(data: &Map<String, Value>) -> Result<(), RtnError> {
+    if data
+        .get("raw_title")
+        .and_then(Value::as_str)
+        .is_none_or(str::is_empty)
+    {
+        return Err(RtnError::InvalidInput(
+            "data_json.raw_title must be a non-empty string.".to_string(),
+        ));
+    }
+    Ok(())
 }
 
 fn to_py_value_error<E: std::fmt::Display>(err: E) -> PyErr {
@@ -113,8 +126,9 @@ fn parse_data_settings_rank_py(
     rank_model_json: &str,
 ) -> PyResult<(Map<String, Value>, Value, Value)> {
     let (data, settings) = parse_data_and_settings_py(data_json, settings_json)?;
-    let rank_model =
-        parse_json_value(rank_model_json, "rank_model_json").map_err(to_py_value_error)?;
+    let rank_model = Value::Object(
+        parse_json_object(rank_model_json, "rank_model_json").map_err(to_py_value_error)?,
+    );
     Ok((data, settings, rank_model))
 }
 
@@ -160,6 +174,11 @@ fn ptt_parse_title(
     raw_title: &str,
     translate_languages: bool,
 ) -> PyResult<Py<PyAny>> {
+    if raw_title.is_empty() {
+        return Err(PyValueError::new_err(
+            "raw_title must be a non-empty string.",
+        ));
+    }
     let parsed = parse_title(raw_title, translate_languages).map_err(to_py_value_error)?;
     map_to_py(py, &parsed)
 }
@@ -171,6 +190,11 @@ fn ptt_parse_many(
     titles: Vec<String>,
     translate_languages: bool,
 ) -> PyResult<Py<PyAny>> {
+    if let Some(index) = titles.iter().position(String::is_empty) {
+        return Err(PyValueError::new_err(format!(
+            "titles[{index}] must be a non-empty string."
+        )));
+    }
     let refs: Vec<&str> = titles.iter().map(String::as_str).collect();
     let parsed = parse_many(refs, translate_languages).map_err(to_py_value_error)?;
     let list = PyList::empty(py);
@@ -316,15 +340,21 @@ fn rtn_check_fetch_and_rank_many(
     rank_model_json: &str,
     speed_mode: bool,
 ) -> PyResult<Vec<(bool, Vec<String>, i64)>> {
-    let settings = parse_json_value(settings_json, "settings_json").map_err(to_py_value_error)?;
-    let rank_model =
-        parse_json_value(rank_model_json, "rank_model_json").map_err(to_py_value_error)?;
+    let settings = Value::Object(
+        parse_json_object(settings_json, "settings_json").map_err(to_py_value_error)?,
+    );
+    let rank_model = Value::Object(
+        parse_json_object(rank_model_json, "rank_model_json").map_err(to_py_value_error)?,
+    );
 
     let data_items = data_jsons
         .iter()
         .map(|data_json| parse_json_object(data_json, "data_json"))
         .collect::<Result<Vec<_>, _>>()
         .map_err(to_py_value_error)?;
+    for data in &data_items {
+        validate_data_root(data).map_err(to_py_value_error)?;
+    }
 
     check_fetch_and_rank_many(&data_items, &settings, &rank_model, speed_mode)
         .map_err(to_py_value_error)
@@ -350,7 +380,9 @@ wrap_failed_bool_fn!(rtn_fetch_other, fetch_other);
 
 #[pyfunction]
 fn rtn_populate_langs(settings_json: &str) -> PyResult<(Vec<String>, Vec<String>, Vec<String>)> {
-    let settings = parse_json_value(settings_json, "settings_json").map_err(to_py_value_error)?;
+    let settings = Value::Object(
+        parse_json_object(settings_json, "settings_json").map_err(to_py_value_error)?,
+    );
     let (exclude, required, allowed) = populate_lang_sets(&settings);
     let mut exclude: Vec<_> = exclude.into_iter().collect();
     let mut required: Vec<_> = required.into_iter().collect();

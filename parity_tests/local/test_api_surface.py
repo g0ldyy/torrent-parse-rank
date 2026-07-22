@@ -203,6 +203,23 @@ def test_native_numeric_boundaries_reject_booleans():
         _native.rtn_episodes_from_season("Show.S01E01", True)
 
 
+def test_native_json_boundaries_require_current_object_roots_and_titles():
+    valid_data = '{"raw_title":"Movie.2026"}'
+    invalid_calls = [
+        lambda: _native.ptt_parse_title(""),
+        lambda: _native.ptt_parse_many(["Movie.2026", ""]),
+        lambda: _native.rtn_check_fetch("{}", "{}"),
+        lambda: _native.rtn_check_fetch(valid_data, "[]"),
+        lambda: _native.rtn_get_rank(valid_data, "{}", "[]"),
+        lambda: _native.rtn_check_fetch_and_rank_many(["{}"], "{}", "{}"),
+        lambda: _native.rtn_populate_langs("[]"),
+    ]
+
+    for call in invalid_calls:
+        with pytest.raises(ValueError):
+            call()
+
+
 def test_combined_fetch_and_rank_matches_individual_calls():
     data = rtn_parse("Oppenheimer.2023.2160p.REMUX.DV.HDR10Plus.TrueHD.7.1.HEVC")
     settings = SettingsModel()
