@@ -1,6 +1,8 @@
 from pathlib import Path
 
 import PTT
+import pytest
+import regex
 from PTT import adult, anime, cli, handlers, parse, transformers
 from RTN import (
     DefaultRanking,
@@ -166,3 +168,23 @@ def test_batched_fetch_and_rank_matches_single_calls_with_patterns():
     ]
 
     assert actual == expected
+
+
+def test_settings_pattern_round_trip_preserves_case_sensitivity(tmp_path: Path):
+    path = tmp_path / "settings.json"
+    settings = SettingsModel(require=["/CaseSensitive/", "insensitive"])
+
+    settings.save(path)
+    loaded = SettingsModel.load(path)
+
+    sensitive, insensitive = loaded.require
+    assert not sensitive.flags & regex.IGNORECASE
+    assert sensitive.search("CaseSensitive")
+    assert not sensitive.search("casesensitive")
+    assert insensitive.flags & regex.IGNORECASE
+    assert insensitive.search("INSENSITIVE")
+
+
+def test_settings_reject_scalar_pattern_configuration():
+    with pytest.raises(ValueError, match="list or tuple"):
+        SettingsModel(require="silently-dropped-before")

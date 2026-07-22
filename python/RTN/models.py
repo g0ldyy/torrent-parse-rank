@@ -444,7 +444,7 @@ def _compile_pattern_list(values: Any) -> list[Pattern]:
     if values is None:
         return []
     if not isinstance(values, (list, tuple)):
-        return []
+        raise ValueError("pattern configuration must be a list or tuple")
     return [_compile_pattern(value) for value in values]
 
 
@@ -645,6 +645,7 @@ class SettingsModel(BaseModel):
     @model_validator(mode="before")
     def compile_and_validate_patterns(cls, values: dict[str, Any]) -> dict[str, Any]:
         """Compile string patterns to regex.Pattern, keeping compiled patterns unchanged."""
+        values = dict(values)
         for field in ("require", "exclude", "preferred"):
             values[field] = _compile_pattern_list(values.get(field))
 
@@ -679,9 +680,15 @@ class SettingsModel(BaseModel):
         """
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
+        payload = self.model_dump(mode="json")
+        for field in ("require", "exclude", "preferred"):
+            payload[field] = [
+                (pattern.pattern if pattern.flags & regex.IGNORECASE else f"/{pattern.pattern}/")
+                for pattern in getattr(self, field)
+            ]
 
         with path.open("w", encoding="utf-8") as f:
-            json.dump(self.model_dump(mode="json"), f, indent=4)
+            json.dump(payload, f, indent=4)
 
     @classmethod
     def load(cls, path: str | Path) -> "SettingsModel":
