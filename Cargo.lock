@@ -464,6 +464,7 @@ dependencies = [
 name = "ptt-core"
 version = "0.1.0"
 dependencies = [
+ "aho-corasick",
  "chrono",
  "criterion",
  "fancy-regex",

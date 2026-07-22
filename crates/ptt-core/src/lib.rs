@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
+use aho_corasick::AhoCorasick;
 use chrono::NaiveDate;
 use fancy_regex::Regex;
 use once_cell::sync::Lazy;
@@ -491,7 +492,7 @@ impl ParserEngine {
                     return Ok(None);
                 }
                 let lower = title.to_lowercase();
-                if ADULT_KEYWORDS.iter().any(|kw| lower.contains(kw)) {
+                if ADULT_KEYWORDS.is_match(&lower) {
                     result.insert("adult".to_owned(), Value::Bool(true));
                 }
                 Ok(None)
@@ -1492,11 +1493,13 @@ static LANGUAGES_TRANSLATION_TABLE: Lazy<HashMap<&'static str, &'static str>> = 
     ])
 });
 
-static ADULT_KEYWORDS: Lazy<HashSet<String>> = Lazy::new(|| {
-    include_str!("../data/combined-keywords.txt")
-        .lines()
-        .map(str::trim)
-        .filter(|s| !s.is_empty())
-        .map(|s| s.to_lowercase())
-        .collect()
+static ADULT_KEYWORDS: Lazy<AhoCorasick> = Lazy::new(|| {
+    AhoCorasick::new(
+        include_str!("../data/combined-keywords.txt")
+            .lines()
+            .map(str::trim)
+            .filter(|keyword| !keyword.is_empty())
+            .map(str::to_lowercase),
+    )
+    .expect("valid adult keyword automaton")
 });

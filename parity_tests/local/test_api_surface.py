@@ -103,6 +103,11 @@ def test_adult_keyword_loading_and_helpers(tmp_path: Path):
     assert source.read_text(encoding="utf-8").splitlines() == ["a", "z"]
 
 
+def test_native_adult_keyword_detection():
+    assert PTT.parse_title("Alexis Texas 2024 1080p WEB-DL")["adult"] is True
+    assert "adult" not in PTT.parse_title("The.Matrix.1999.1080p.BluRay")
+
+
 def test_combined_fetch_and_rank_matches_individual_calls():
     data = rtn_parse("Oppenheimer.2023.2160p.REMUX.DV.HDR10Plus.TrueHD.7.1.HEVC")
     settings = SettingsModel()
