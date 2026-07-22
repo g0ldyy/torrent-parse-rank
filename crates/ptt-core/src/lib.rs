@@ -730,6 +730,8 @@ fn first_integer_transform(input: &str) -> Option<i64> {
         .and_then(|m| m.as_str().parse::<i64>().ok())
 }
 
+const MAX_EXPANDED_RANGE_ITEMS: i64 = 10_000;
+
 fn range_func(input: &str) -> Option<Vec<Value>> {
     let numbers: Vec<i64> = DIGITS_RE
         .find_iter(input)
@@ -737,7 +739,13 @@ fn range_func(input: &str) -> Option<Vec<Value>> {
         .filter_map(|m| m.as_str().parse::<i64>().ok())
         .collect();
 
-    if numbers.len() == 2 && numbers[0] < numbers[1] {
+    if numbers.len() == 2
+        && numbers[0] < numbers[1]
+        && numbers[1]
+            .checked_sub(numbers[0])
+            .and_then(|span| span.checked_add(1))
+            .is_some_and(|length| length <= MAX_EXPANDED_RANGE_ITEMS)
+    {
         return Some(
             (numbers[0]..=numbers[1])
                 .map(|n| Value::Number(n.into()))
@@ -877,6 +885,9 @@ fn range_x_of_y_func(input: &str) -> Option<Vec<Value>> {
         .filter_map(|m| m.as_str().parse::<i64>().ok())
         .collect();
     if numbers.len() != 1 {
+        return None;
+    }
+    if !(1..=MAX_EXPANDED_RANGE_ITEMS).contains(&numbers[0]) {
         return None;
     }
     Some((1..=numbers[0]).map(|n| Value::Number(n.into())).collect())

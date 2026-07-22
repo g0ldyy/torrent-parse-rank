@@ -131,6 +131,19 @@ def test_transformers_symbols_present():
         assert hasattr(transformers, name), f"missing transformer symbol: {name}"
 
 
+def test_transformer_range_expansion_is_bounded():
+    assert transformers.range_func("9999-10001") == [9999, 10000, 10001]
+    assert transformers.range_func("1-10001") is None
+    assert transformers.range_x_of_y_func("10000")[-1] == 10000
+    assert transformers.range_x_of_y_func("10001") is None
+    assert transformers.range_x_of_y_func("0") is None
+
+
+def test_native_parser_rejects_oversized_of_range_without_allocating_it():
+    parsed = parse.Parser().parse("Show [1000000000 of 1000000001]")
+    assert parsed["episodes"] == []
+
+
 def test_parser_class_methods_present_and_working():
     parser = parse.Parser()
     handlers.add_defaults(parser)

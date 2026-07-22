@@ -2,6 +2,8 @@ import re
 from collections.abc import Callable
 from datetime import datetime
 
+MAX_EXPANDED_RANGE_ITEMS = 10_000
+
 
 def none(input_value: str) -> str:
     return input_value
@@ -103,7 +105,11 @@ def date(date_format: str | list[str]) -> Callable[[str], str | None]:
 def range_func(input_str: str) -> list[int] | None:
     numbers = [int(x) for x in re.findall(r"\d+", input_str)]
 
-    if len(numbers) == 2 and numbers[0] < numbers[1]:
+    if (
+        len(numbers) == 2
+        and numbers[0] < numbers[1]
+        and numbers[1] - numbers[0] + 1 <= MAX_EXPANDED_RANGE_ITEMS
+    ):
         return list(range(numbers[0], numbers[1] + 1))
     if len(numbers) > 2 and all(numbers[i] + 1 == numbers[i + 1] for i in range(len(numbers) - 1)):
         return numbers
@@ -115,7 +121,7 @@ def range_func(input_str: str) -> list[int] | None:
 
 def range_x_of_y_func(input_str: str) -> list[int] | None:
     numbers = [int(x) for x in re.findall(r"\d+", input_str)]
-    if len(numbers) != 1:
+    if len(numbers) != 1 or not 1 <= numbers[0] <= MAX_EXPANDED_RANGE_ITEMS:
         return None
     return list(range(1, numbers[0] + 1))
 
