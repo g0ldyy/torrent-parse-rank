@@ -6,6 +6,7 @@ import regex
 from PTT import adult, anime, cli, handlers, parse, transformers
 from RTN import (
     DefaultRanking,
+    Resolution,
     SettingsModel,
     check_fetch,
     check_fetch_and_rank,
@@ -15,6 +16,7 @@ from RTN import (
     get_lev_ratio,
     get_rank,
     normalize_title,
+    sort_torrents,
     title_match,
 )
 from RTN import parse as rtn_parse
@@ -243,6 +245,22 @@ def test_title_similarity_rejects_boolean_threshold():
 def test_episode_extraction_rejects_boolean_season():
     with pytest.raises(TypeError, match="positive integer"):
         episodes_from_season("Show.S01E01", True)
+
+
+@pytest.mark.parametrize("bucket_limit", [True, -1, 1.5, "2"])
+def test_sort_torrents_rejects_invalid_bucket_limits(bucket_limit):
+    with pytest.raises(TypeError, match="bucket limit"):
+        sort_torrents(set(), bucket_limit=bucket_limit)
+
+
+@pytest.mark.parametrize("resolutions", [False, (), [Resolution.FHD_1080P, "720p"]])
+def test_sort_torrents_rejects_invalid_resolutions(resolutions):
+    with pytest.raises(TypeError, match="Resolutions"):
+        sort_torrents(set(), resolutions=resolutions)
+
+
+def test_sort_torrents_keeps_zero_as_unbounded():
+    assert sort_torrents(set(), bucket_limit=0) == {}
 
 
 def test_populated_language_groups_are_deterministically_ordered():

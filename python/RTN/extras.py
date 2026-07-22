@@ -94,9 +94,20 @@ def sort_torrents(
     bucket_limit: int | None = None,
     resolutions: list[Resolution] | None = None,
 ) -> dict[str, Torrent]:
-    resolutions = resolutions or []
     if not isinstance(torrents, set) or not all(isinstance(t, Torrent) for t in torrents):
         raise TypeError("The input must be a set of Torrent objects.")
+    if (
+        isinstance(bucket_limit, bool)
+        or not isinstance(bucket_limit, (int, type(None)))
+        or (bucket_limit is not None and bucket_limit < 0)
+    ):
+        raise TypeError("The bucket limit must be a non-negative integer or None.")
+    if resolutions is None:
+        resolutions = []
+    elif not isinstance(resolutions, list) or not all(
+        isinstance(resolution, Resolution) for resolution in resolutions
+    ):
+        raise TypeError("Resolutions must be a list of Resolution values or None.")
 
     ranked: list[tuple[Resolution, Torrent]] = [
         (get_resolution(torrent), torrent) for torrent in torrents
@@ -109,7 +120,7 @@ def sort_torrents(
         reverse=True,
     )
 
-    if bucket_limit and bucket_limit > 0:
+    if bucket_limit:
         bucket_groups: dict[Resolution, list[Torrent]] = {}
         for resolution, torrent in ranked:
             bucket_groups.setdefault(resolution, []).append(torrent)
