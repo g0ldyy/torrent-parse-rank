@@ -70,6 +70,28 @@ def test_api_modules_and_symbols_present():
     assert hasattr(handlers, "add_defaults")
 
 
+def test_remote_workflow_actions_are_pinned_to_full_commits():
+    root = Path(__file__).resolve().parents[2]
+    action_refs = []
+    for workflow in sorted((root / ".github" / "workflows").glob("*.yml")):
+        for line in workflow.read_text(encoding="utf-8").splitlines():
+            stripped = line.strip().removeprefix("- ")
+            if not stripped.startswith("uses:"):
+                continue
+            action = stripped.removeprefix("uses:").strip().split(maxsplit=1)[0]
+            if action.startswith("./"):
+                continue
+            action_refs.append((workflow.name, action))
+
+    assert action_refs
+    for workflow, action in action_refs:
+        assert "@" in action, f"{workflow}: action has no revision: {action}"
+        revision = action.rsplit("@", 1)[1]
+        assert regex.fullmatch(r"[0-9a-f]{40}", revision), (
+            f"{workflow}: external action must use a full commit: {action}"
+        )
+
+
 def test_parse_module_symbols_present():
     for name in [
         "NON_ENGLISH_CHARS",
