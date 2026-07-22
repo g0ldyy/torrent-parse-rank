@@ -28,6 +28,7 @@ from RTN import (
 )
 from RTN import parse as rtn_parse
 from RTN._native_bridge import data_to_json, rank_model_to_json, settings_to_json
+from RTN.exceptions import GarbageTorrent
 from RTN.fetch import (
     adult_handler,
     check_exclude,
@@ -773,6 +774,25 @@ def test_parser_entry_points_enforce_current_controls_and_models():
 
     with pytest.raises(TypeError):
         rtn.rank(*rank_args, legacy=True)
+
+
+@pytest.mark.parametrize(
+    "raw_title,infohash,exception_type",
+    [
+        (object(), "a" * 40, TypeError),
+        ("Movie.2026.1080p", object(), TypeError),
+        ("Movie.2026.1080p", "g" * 40, GarbageTorrent),
+        ("Movie.2026.1080p", "a" * 39 + "-", GarbageTorrent),
+    ],
+)
+def test_rank_rejects_non_current_title_and_sha1_inputs(raw_title, infohash, exception_type):
+    rtn = RTN(SettingsModel(), DefaultRanking())
+
+    with pytest.raises(exception_type):
+        rtn.rank(raw_title, infohash)
+
+    valid = rtn.rank("Movie.2026.1080p", "A" * 40)
+    assert valid.infohash == "A" * 40
 
 
 def test_direct_model_json_matches_current_native_payloads():

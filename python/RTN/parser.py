@@ -10,6 +10,8 @@ from .extras import get_lev_ratio
 from .fetch import check_fetch_and_rank
 from .models import BaseRankingModel, DefaultRanking, ParsedData, SettingsModel, Torrent
 
+_SHA1_HEX_DIGITS = frozenset("0123456789abcdefABCDEF")
+
 
 class RTN:
     def __init__(self, settings: SettingsModel, ranking_model: BaseRankingModel | None = None):
@@ -41,10 +43,16 @@ class RTN:
         if not self.settings.enabled:
             raise SettingsDisabled("Settings are disabled and cannot be used.")
 
+        if raw_title is None or infohash is None:
+            raise ValueError("Both the title and infohash must be provided.")
+        if type(raw_title) is not str:
+            raise TypeError("The title must be a string.")
+        if type(infohash) is not str:
+            raise TypeError("The infohash must be a string.")
         if not raw_title or not infohash:
             raise ValueError("Both the title and infohash must be provided.")
 
-        if len(infohash) != 40:
+        if len(infohash) != 40 or any(char not in _SHA1_HEX_DIGITS for char in infohash):
             raise GarbageTorrent(
                 "The infohash must be a valid SHA-1 hash and 40 characters in length."
             )
