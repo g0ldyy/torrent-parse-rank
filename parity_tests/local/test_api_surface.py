@@ -8,8 +8,10 @@ from PTT import adult, anime, cli, handlers, parse, transformers
 from pydantic_core import PydanticSerializationError
 from RTN import (
     DefaultRanking,
+    ParsedData,
     Resolution,
     SettingsModel,
+    Torrent,
     check_fetch,
     check_fetch_and_rank,
     check_fetch_and_rank_many,
@@ -268,6 +270,20 @@ def test_sort_torrents_rejects_invalid_resolutions(resolutions):
 
 def test_sort_torrents_keeps_zero_as_unbounded():
     assert sort_torrents(set(), bucket_limit=0) == {}
+
+
+def test_sort_torrents_breaks_equal_rank_ties_deterministically():
+    torrents = {
+        Torrent(
+            infohash=infohash,
+            raw_title="Movie.1080p",
+            data=ParsedData(raw_title="Movie.1080p", resolution="1080p"),
+            rank=100,
+        )
+        for infohash in ("a" * 40, "c" * 40, "b" * 40)
+    }
+
+    assert list(sort_torrents(torrents)) == ["c" * 40, "b" * 40, "a" * 40]
 
 
 def test_direct_model_json_matches_current_native_payloads():

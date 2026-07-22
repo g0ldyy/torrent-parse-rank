@@ -116,7 +116,7 @@ def sort_torrents(
         ranked = [item for item in ranked if item[0] in resolutions]
 
     ranked.sort(
-        key=lambda item: (item[0].value, item[1].rank),
+        key=lambda item: (item[0].value, item[1].rank, item[1].infohash),
         reverse=True,
     )
 
