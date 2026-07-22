@@ -127,6 +127,67 @@ def test_adult_keyword_loading_and_helpers(tmp_path: Path):
     assert source.read_text(encoding="utf-8").splitlines() == ["a", "z"]
 
 
+def test_cli_sort_by_count_is_strict_and_deterministic(tmp_path: Path):
+    source = tmp_path / "counts.txt"
+    source.write_text("z,2\na,10\nb,2\n", encoding="utf-8")
+
+    cli.sort_by_count(str(source))
+
+    assert source.read_text(encoding="utf-8").splitlines() == ["a,10", "b,2", "z,2"]
+
+
+def test_cli_sort_by_count_preserves_invalid_input(tmp_path: Path):
+    source = tmp_path / "counts.txt"
+    original = "valid,2\nmalformed\n"
+    source.write_text(original, encoding="utf-8")
+
+    with pytest.raises(ValueError, match="line 2"):
+        cli.sort_by_count(str(source))
+
+    assert source.read_text(encoding="utf-8") == original
+
+
+def test_cli_combine_uses_only_regular_txt_sources(tmp_path: Path):
+    (tmp_path / "b.txt").write_text("z\na\n", encoding="utf-8")
+    (tmp_path / "a.txt").write_text("b\na\n", encoding="utf-8")
+    (tmp_path / "combined-keywords-extra.txt").write_text("c\n", encoding="utf-8")
+    (tmp_path / "ignored.txt").mkdir()
+
+    cli.combine_keywords(str(tmp_path))
+
+    assert (tmp_path / "combined-keywords.txt").read_text(encoding="utf-8").splitlines() == [
+        "a",
+        "b",
+        "c",
+        "z",
+    ]
+
+
+def test_cli_atomic_replacement_failure_preserves_source(tmp_path: Path, monkeypatch):
+    source = tmp_path / "keywords.txt"
+    original = "z\na\na\n"
+    source.write_text(original, encoding="utf-8")
+
+    def fail_replace(_source, _destination):
+        raise OSError("replacement failed")
+
+    monkeypatch.setattr(cli.os, "replace", fail_replace)
+    with pytest.raises(OSError, match="replacement failed"):
+        cli.dedupe_and_sort(str(source))
+
+    assert source.read_text(encoding="utf-8") == original
+    assert list(tmp_path.glob(".*.tmp")) == []
+
+
+def test_cli_rejects_removed_anime_switch(monkeypatch):
+    monkeypatch.setattr("sys.argv", ["ptt", "parse", "title", "--anime"])
+
+    with pytest.raises(SystemExit) as error:
+        cli.main()
+
+    assert error.value.code == 2
+
+
 def test_native_adult_keyword_detection():
     assert PTT.parse_title("Alexis Texas 2024 1080p WEB-DL")["adult"] is True
     assert "adult" not in PTT.parse_title("The.Matrix.1999.1080p.BluRay")

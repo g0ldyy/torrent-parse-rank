@@ -1,19 +1,52 @@
 import argparse
 import json
 import os
-import sys
+import stat
+import tempfile
+from collections.abc import Iterable
+from pathlib import Path
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Parse filename or torrent name using Parsett")
-    subparsers = parser.add_subparsers(dest="command", help="Commands")
+def _regular_file(filename: str) -> Path:
+    path = Path(filename)
+    if path.is_symlink() or not path.is_file():
+        raise ValueError(f"not a regular file: {path}")
+    return path
+
+
+def _directory(directory: str) -> Path:
+    path = Path(directory)
+    if path.is_symlink() or not path.is_dir():
+        raise ValueError(f"not a directory: {path}")
+    return path
+
+
+def _atomic_write_lines(path: Path, lines: Iterable[str]) -> None:
+    mode = stat.S_IMODE(path.stat().st_mode) if path.exists() else None
+    descriptor, temporary_name = tempfile.mkstemp(
+        dir=path.parent, prefix=f".{path.name}.", suffix=".tmp"
+    )
+    temporary_path = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as output:
+            output.writelines(lines)
+            output.flush()
+            os.fsync(output.fileno())
+        if mode is not None:
+            temporary_path.chmod(mode)
+        os.replace(temporary_path, path)
+    except BaseException:
+        temporary_path.unlink(missing_ok=True)
+        raise
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Parse a filename or torrent name")
+    subparsers = parser.add_subparsers(dest="command", required=True, help="Commands")
 
     parse_parser = subparsers.add_parser("parse", help="Parse a filename or torrent name")
     parse_parser.add_argument(
         "filename", type=str, help="The name of the file or torrent to be parsed"
-    )
-    parse_parser.add_argument(
-        "-a", "--anime", action="store_true", help="Enable parsing of anime titles"
     )
     parse_parser.add_argument(
         "-tl",
@@ -35,90 +68,84 @@ def main():
 
     dedupe_parser = subparsers.add_parser(
         "dedupe",
-        help="Deduplicate and sort a file by count. Requires `keyword` format on every line.",
+        help="Deduplicate and sort a file. Requires `keyword` format on every line.",
     )
     dedupe_parser.add_argument("filename", type=str, help="File to deduplicate and sort")
 
     args = parser.parse_args()
 
     if args.command == "parse":
-        if not args.filename:
-            parser.print_help()
-            sys.exit(1)
-
         from PTT import parse_title
 
         result = parse_title(args.filename, translate_languages=args.translate_languages)
         print(json.dumps(result, indent=4))
-    elif args.command == "sort":
-        sort_by_count(args.filename)
-    elif args.command == "combine":
-        combine_keywords(args.directory)
-    elif args.command == "dedupe":
-        dedupe_and_sort(args.filename)
-    else:
-        parser.print_help()
-        sys.exit(1)
+        return
+
+    try:
+        if args.command == "sort":
+            sort_by_count(args.filename)
+        elif args.command == "combine":
+            combine_keywords(args.directory)
+        else:
+            dedupe_and_sort(args.filename)
+    except (OSError, ValueError) as error:
+        parser.error(str(error))
 
 
 def combine_keywords(directory: str) -> None:
     """Combine keywords from all txt files in a directory into a sorted unique list."""
-    keywords = set()
-    files_used = 0
-    for filename in os.listdir(directory):
-        if filename.endswith(".txt") and "combined-keywords" not in filename:
-            filepath = os.path.join(directory, filename)
-            with open(filepath, encoding="utf-8") as f:
-                keywords.update(line.strip() for line in f if line.strip())
-            files_used += 1
+    source_directory = _directory(directory)
+    output_file = source_directory / "combined-keywords.txt"
+    source_files = sorted(
+        path
+        for path in source_directory.iterdir()
+        if path.suffix == ".txt"
+        and path.name != output_file.name
+        and not path.is_symlink()
+        and path.is_file()
+    )
+    keywords: set[str] = set()
+    for source_file in source_files:
+        with source_file.open(encoding="utf-8") as source:
+            keywords.update(line.strip() for line in source if line.strip())
 
-    output_file = os.path.join(directory, "combined-keywords.txt")
-    with open(output_file, "w", encoding="utf-8") as f:
-        for keyword in sorted(keywords):
-            f.write(f"{keyword}\n")
-
-    print(f"Combined and sorted into {output_file.split('/')[-1]} using {files_used} files")
+    _atomic_write_lines(output_file, (f"{keyword}\n" for keyword in sorted(keywords)))
+    print(f"Combined and sorted into {output_file.name} using {len(source_files)} files")
 
 
 def sort_by_count(filename: str) -> None:
     """Sort lines in `name,count` format by descending count."""
-    with open(filename, encoding="utf-8") as f:
-        lines = f.readlines()
-
-    entries = []
-    for line in lines:
-        line = line.strip()
-        if "," in line:
-            name, count = line.split(",", 1)
-            try:
-                entries.append((name, int(count)))
-            except ValueError:
+    path = _regular_file(filename)
+    entries: list[tuple[str, int]] = []
+    with path.open(encoding="utf-8") as source:
+        for line_number, raw_line in enumerate(source, start=1):
+            line = raw_line.strip()
+            if not line:
                 continue
+            fields = line.split(",")
+            if len(fields) != 2 or not fields[0].strip():
+                raise ValueError(f"invalid keyword,count entry on line {line_number}")
+            try:
+                count = int(fields[1])
+            except ValueError as error:
+                raise ValueError(
+                    f"invalid integer count on line {line_number}: {fields[1]!r}"
+                ) from error
+            entries.append((fields[0].strip(), count))
 
-    sorted_entries = sorted(entries, key=lambda x: x[1], reverse=True)
-    with open(filename, "w", encoding="utf-8") as f:
-        for name, count in sorted_entries:
-            f.write(f"{name},{count}\n")
-
-    print(f"Sorted by count {filename.split('/')[-1]}")
+    entries.sort(key=lambda entry: (-entry[1], entry[0]))
+    _atomic_write_lines(path, (f"{name},{count}\n" for name, count in entries))
+    print(f"Sorted by count {path.name}")
 
 
 def dedupe_and_sort(filename: str) -> None:
     """Deduplicate lines and write them back sorted."""
-    with open(filename, encoding="utf-8") as f:
-        lines = f.readlines()
+    path = _regular_file(filename)
+    with path.open(encoding="utf-8") as source:
+        unique_keywords = {line.strip() for line in source if line.strip()}
 
-    unique_keywords = set()
-    for line in lines:
-        keyword = line.strip()
-        if keyword:
-            unique_keywords.add(keyword)
-
-    with open(filename, "w", encoding="utf-8") as f:
-        for keyword in sorted(unique_keywords):
-            f.write(f"{keyword}\n")
-
-    print(f"Deduplicated and sorted {filename.split('/')[-1]}")
+    _atomic_write_lines(path, (f"{keyword}\n" for keyword in sorted(unique_keywords)))
+    print(f"Deduplicated and sorted {path.name}")
 
 
 if __name__ == "__main__":
