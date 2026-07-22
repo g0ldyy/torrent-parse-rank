@@ -1153,10 +1153,12 @@ pub fn check_fetch_and_rank_many(
 
 pub fn parse_json_object(raw: &str, field_name: &str) -> Result<Map<String, Value>, RtnError> {
     let value = parse_json_value(raw, field_name)?;
-    value
-        .as_object()
-        .cloned()
-        .ok_or_else(|| RtnError::InvalidInput(format!("Expected JSON object for {field_name}.")))
+    match value {
+        Value::Object(map) => Ok(map),
+        _ => Err(RtnError::InvalidInput(format!(
+            "Expected JSON object for {field_name}."
+        ))),
+    }
 }
 
 pub fn parse_json_value(raw: &str, field_name: &str) -> Result<Value, RtnError> {
