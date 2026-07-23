@@ -127,7 +127,7 @@ fn compile_regex(pattern: &str, ignore_case: bool) -> Result<PcreRegex, ParseErr
     builder.utf(true);
     builder.ucp(true);
     builder.caseless(ignore_case);
-    builder.jit(true);
+    builder.jit_if_available(true);
     builder.build(&normalized_pattern).map_err(|error| {
         ParseError::Regex(format!("Error compiling regex: {error}; pattern={pattern}"))
     })
