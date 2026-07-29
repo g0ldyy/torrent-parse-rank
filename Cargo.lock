@@ -470,6 +470,7 @@ dependencies = [
  "fancy-regex",
  "once_cell",
  "pcre2",
+ "regex-syntax",
  "serde",
  "serde_json",
  "thiserror",

@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 
-use aho_corasick::AhoCorasick;
+use aho_corasick::{AhoCorasick, AhoCorasickBuilder};
 use chrono::NaiveDate;
 use fancy_regex::Regex;
 use once_cell::sync::Lazy;
@@ -9,6 +9,10 @@ use pcre2::bytes::{Regex as PcreRegex, RegexBuilder as PcreRegexBuilder};
 use serde::Deserialize;
 use serde_json::{Map, Value, json};
 use thiserror::Error;
+
+mod prefilter;
+
+use prefilter::{Gate, Hits, Prefilter};
 
 #[derive(Debug, Error)]
 pub enum ParseError {
@@ -114,11 +118,12 @@ struct RuntimeHandler {
     kind: RuntimeHandlerKind,
     transform: TransformSpec,
     options: HandlerOptions,
+    gate: Gate,
 }
 
-#[derive(Debug, Clone)]
 struct ParserEngine {
     handlers: Vec<RuntimeHandler>,
+    prefilter: Prefilter,
 }
 
 fn compile_regex(pattern: &str, ignore_case: bool) -> Result<PcreRegex, ParseError> {
@@ -244,6 +249,7 @@ impl ParserEngine {
         let table: HandlerTable =
             serde_json::from_str(json_text).map_err(|e| ParseError::Data(e.to_string()))?;
         let mut handlers = Vec::with_capacity(table.handlers.len());
+        let mut gate_specs = Vec::with_capacity(table.handlers.len());
         for raw in table.handlers {
             let options: HandlerOptions = raw.options.into();
             let transform = parse_transform(&raw.transform);
@@ -253,18 +259,32 @@ impl ParserEngine {
                         .pattern
                         .ok_or_else(|| ParseError::Data("missing pattern".to_owned()))?;
                     let ignore_case = (raw.flags.unwrap_or(0) & 2) != 0;
+                    let normalized = normalize_pattern_for_pcre2(&pat);
+                    gate_specs.push(prefilter::derive(&normalized));
                     RuntimeHandlerKind::Regex(compile_regex(&pat, ignore_case)?)
                 }
-                _ => RuntimeHandlerKind::Function(raw.function.unwrap_or_default()),
+                _ => {
+                    let function = raw.function.unwrap_or_default();
+                    gate_specs.push(Vec::new());
+                    RuntimeHandlerKind::Function(function)
+                }
             };
             handlers.push(RuntimeHandler {
                 name: raw.name,
                 kind,
                 transform,
                 options,
+                gate: Gate::default(),
             });
         }
-        Ok(Self { handlers })
+        let (prefilter, gates) = Prefilter::build(&gate_specs);
+        for (handler, gate) in handlers.iter_mut().zip(gates) {
+            handler.gate = gate;
+        }
+        Ok(Self {
+            handlers,
+            prefilter,
+        })
     }
 
     fn parse(
@@ -280,12 +300,27 @@ impl ParserEngine {
         raw_title: &str,
         translate_languages: bool,
     ) -> Result<ParseContext, ParseError> {
-        let mut title = SUB_PATTERN.replace_all(raw_title, " ").to_string();
+        self.parse_context_impl::<true>(raw_title, translate_languages)
+    }
+
+    fn parse_context_impl<const PREFILTER: bool>(
+        &self,
+        raw_title: &str,
+        translate_languages: bool,
+    ) -> Result<ParseContext, ParseError> {
+        let mut title = normalize_underscores(raw_title);
         let mut result = Map::new();
         let mut matched: HashMap<String, MatchInfo> = HashMap::new();
         let mut end_of_title = title.len();
+        let mut hits = Hits::default();
+        if PREFILTER {
+            self.prefilter.scan(&title, &mut hits);
+        }
 
         for handler in &self.handlers {
+            if PREFILTER && !handler.gate.hit(&hits) {
+                continue;
+            }
             let maybe_match = match &handler.kind {
                 RuntimeHandlerKind::Regex(re) => {
                     self.apply_regex_handler(handler, re, &title, &mut result, &mut matched)?
@@ -309,6 +344,9 @@ impl ParserEngine {
                     (match_result.match_index + match_result.raw_match.len()).min(title.len());
                 if start <= end && title.is_char_boundary(start) && title.is_char_boundary(end) {
                     title.replace_range(start..end, "");
+                    if PREFILTER {
+                        self.prefilter.scan(&title, &mut hits);
+                    }
                 }
             }
             if !match_result.skip_from_title
@@ -374,6 +412,14 @@ impl ParserEngine {
             return Ok(None);
         }
 
+        // PCRE2 pools match data for is_match; captures allocates its capture
+        // vector, so only run it for the small set of handlers that match.
+        if !regex
+            .is_match(title.as_bytes())
+            .map_err(|e| ParseError::Regex(e.to_string()))?
+        {
+            return Ok(None);
+        }
         let captures = regex
             .captures(title.as_bytes())
             .map_err(|e| ParseError::Regex(e.to_string()))?;
@@ -398,9 +444,10 @@ impl ParserEngine {
         }
 
         let mut is_before_title = false;
-        if let Some(caps) = BEFORE_TITLE_MATCH_REGEX
-            .captures(title)
-            .map_err(|e| ParseError::Regex(e.to_string()))?
+        if title.starts_with('[')
+            && let Some(caps) = BEFORE_TITLE_MATCH_REGEX
+                .captures(title)
+                .map_err(|e| ParseError::Regex(e.to_string()))?
             && let Some(g1) = caps.get(1)
         {
             is_before_title = g1.as_str().contains(&raw_match);
@@ -461,8 +508,12 @@ impl ParserEngine {
                 if already_adult {
                     return Ok(None);
                 }
-                let lower = title.to_lowercase();
-                if ADULT_KEYWORDS.is_match(&lower) {
+                let is_adult = if title.is_ascii() {
+                    ADULT_KEYWORDS.is_match(title)
+                } else {
+                    ADULT_KEYWORDS.is_match(&title.to_lowercase())
+                };
+                if is_adult {
                     result.insert("adult".to_owned(), Value::Bool(true));
                 }
                 Ok(None)
@@ -1092,24 +1143,74 @@ fn replace_in_place(text: &mut String, regex: &Regex, replacement: &str) {
     }
 }
 
+fn normalize_underscores(input: &str) -> String {
+    let mut output = String::with_capacity(input.len());
+    let mut in_run = false;
+    for character in input.chars() {
+        if character == '_' {
+            if !in_run {
+                output.push(' ');
+                in_run = true;
+            }
+        } else {
+            output.push(character);
+            in_run = false;
+        }
+    }
+    output
+}
+
 fn clean_title(raw_title: &str) -> String {
+    clean_title_impl::<true>(raw_title)
+}
+
+fn clean_title_impl<const GUARDED: bool>(raw_title: &str) -> String {
     let mut cleaned = raw_title.replace('_', " ");
-    replace_all_in_place(&mut cleaned, &MOVIE_REGEX, "");
-    replace_all_in_place(&mut cleaned, &NOT_ALLOWED_SYMBOLS_AT_START_AND_END, "");
-    replace_all_in_place(&mut cleaned, &RUSSIAN_CAST_REGEX, "");
-    replace_in_place(&mut cleaned, &STAR_REGEX_1, "$1");
-    replace_in_place(&mut cleaned, &STAR_REGEX_2, "$1");
-    replace_all_in_place(&mut cleaned, &ALT_TITLES_REGEX, "");
-    replace_all_in_place(&mut cleaned, &NOT_ONLY_NON_ENGLISH_REGEX, "");
-    replace_all_in_place(
-        &mut cleaned,
-        &REMAINING_NOT_ALLOWED_SYMBOLS_AT_START_AND_END,
-        "",
-    );
-    replace_all_in_place(&mut cleaned, &EMPTY_BRACKETS_REGEX, "");
-    replace_all_in_place(&mut cleaned, &MP3_REGEX, "");
-    replace_all_in_place(&mut cleaned, &PARANTHESES_WITHOUT_CONTENT, "");
-    replace_all_in_place(&mut cleaned, &SPECIAL_CHAR_SPACING, "");
+    if !GUARDED || contains_ascii_fold(&cleaned, "movie") {
+        replace_all_in_place(&mut cleaned, &MOVIE_REGEX, "");
+    }
+    if !GUARDED || !starts_ascii_word(&cleaned) || last_byte_in(&cleaned, b" -:/\\[|{(#$&^") {
+        replace_all_in_place(&mut cleaned, &NOT_ALLOWED_SYMBOLS_AT_START_AND_END, "");
+    }
+    if !GUARDED || cleaned.ends_with(')') {
+        replace_all_in_place(&mut cleaned, &RUSSIAN_CAST_REGEX, "");
+    }
+    if !GUARDED || cleaned.starts_with(['[', '【', '★']) {
+        replace_in_place(&mut cleaned, &STAR_REGEX_1, "$1");
+    }
+    if !GUARDED || cleaned.ends_with([']', '】', '★']) {
+        replace_in_place(&mut cleaned, &STAR_REGEX_2, "$1");
+    }
+    if !GUARDED || (!cleaned.is_ascii() && cleaned.contains(['/', '|'])) {
+        replace_all_in_place(&mut cleaned, &ALT_TITLES_REGEX, "");
+    }
+    if !GUARDED
+        || cleaned.ends_with(']')
+        || (!starts_ascii_word(&cleaned) && !cleaned.starts_with('#'))
+    {
+        replace_all_in_place(
+            &mut cleaned,
+            &REMAINING_NOT_ALLOWED_SYMBOLS_AT_START_AND_END,
+            "",
+        );
+    }
+    if !GUARDED || cleaned.contains(['(', '[', '{']) {
+        replace_all_in_place(&mut cleaned, &EMPTY_BRACKETS_REGEX, "");
+    }
+    if !GUARDED
+        || cleaned
+            .as_bytes()
+            .get(cleaned.len().saturating_sub(3)..)
+            .is_some_and(|suffix| suffix.eq_ignore_ascii_case(b"mp3"))
+    {
+        replace_all_in_place(&mut cleaned, &MP3_REGEX, "");
+    }
+    if !GUARDED || cleaned.contains(['(', '[', '{']) {
+        replace_all_in_place(&mut cleaned, &PARANTHESES_WITHOUT_CONTENT, "");
+    }
+    if !GUARDED || cleaned.contains(['-', '+', '_', '{', '}', '[', ']']) {
+        replace_all_in_place(&mut cleaned, &SPECIAL_CHAR_SPACING, "");
+    }
 
     for (open, close) in [("{", "}"), ("[", "]"), ("(", ")")] {
         if cleaned.matches(open).count() != cleaned.matches(close).count() {
@@ -1133,9 +1234,46 @@ fn clean_title(raw_title: &str) -> String {
         }
     }
 
-    replace_all_in_place(&mut cleaned, &REDUNDANT_SYMBOLS_AT_END, "");
-    replace_all_in_place(&mut cleaned, &SPACING_REGEX, " ");
+    if !GUARDED || last_byte_in(&cleaned, b" -:./\\") {
+        replace_all_in_place(&mut cleaned, &REDUNDANT_SYMBOLS_AT_END, "");
+    }
+    if !GUARDED || has_collapsible_whitespace(&cleaned) {
+        replace_all_in_place(&mut cleaned, &SPACING_REGEX, " ");
+    }
     cleaned.trim().to_owned()
+}
+
+fn starts_ascii_word(input: &str) -> bool {
+    input
+        .as_bytes()
+        .first()
+        .is_some_and(|byte| byte.is_ascii_alphanumeric() || *byte == b'_')
+}
+
+fn last_byte_in(input: &str, bytes: &[u8]) -> bool {
+    input
+        .as_bytes()
+        .last()
+        .is_some_and(|last| bytes.contains(last))
+}
+
+fn contains_ascii_fold(input: &str, needle: &str) -> bool {
+    input
+        .as_bytes()
+        .windows(needle.len())
+        .any(|window| window.eq_ignore_ascii_case(needle.as_bytes()))
+}
+
+fn has_collapsible_whitespace(input: &str) -> bool {
+    let mut previous_was_whitespace = false;
+    for byte in input.bytes() {
+        let whitespace = matches!(byte, b' ' | b'\t' | b'\n' | b'\r' | 0x0c);
+        if whitespace && (previous_was_whitespace || byte != b' ') {
+            return true;
+        }
+        previous_was_whitespace = whitespace;
+    }
+    false
 }
 
 fn normalize_mixed_script_title(mut title: String) -> String {
@@ -1296,10 +1434,46 @@ pub fn parse_many<'a, I>(
 where
     I: IntoIterator<Item = &'a str>,
 {
-    titles
+    const MIN_TITLES_PER_WORKER: usize = 16;
+
+    let titles: Vec<_> = titles.into_iter().collect();
+    let available_workers = std::thread::available_parallelism()
+        .map(usize::from)
+        .unwrap_or(1);
+    let worker_count = available_workers.min(titles.len().div_ceil(MIN_TITLES_PER_WORKER));
+    if worker_count <= 1 {
+        return titles
+            .into_iter()
+            .map(|title| parse_title(title, translate_languages))
+            .collect();
+    }
+
+    let chunk_size = titles.len().div_ceil(worker_count);
+    let mut output: Vec<Option<Map<String, Value>>> = vec![None; titles.len()];
+    std::thread::scope(|scope| {
+        let handles: Vec<_> = titles
+            .chunks(chunk_size)
+            .zip(output.chunks_mut(chunk_size))
+            .map(|(input, output)| {
+                scope.spawn(move || {
+                    for (title, slot) in input.iter().zip(output) {
+                        *slot = Some(parse_title(title, translate_languages)?);
+                    }
+                    Ok::<_, ParseError>(())
+                })
+            })
+            .collect();
+        for handle in handles {
+            handle
+                .join()
+                .map_err(|_| ParseError::Data("batch parser worker panicked".to_owned()))??;
+        }
+        Ok::<_, ParseError>(())
+    })?;
+    Ok(output
         .into_iter()
-        .map(|t| parse_title(t, translate_languages))
-        .collect()
+        .map(|item| item.expect("successful worker filled every output slot"))
+        .collect())
 }
 
 pub fn clean_title_native(raw_title: &str) -> String {
@@ -1328,7 +1502,6 @@ static HANDLERS_JSON: &str = include_str!("generated/handlers.json");
 static ENGINE: Lazy<ParserEngine> =
     Lazy::new(|| ParserEngine::from_json(HANDLERS_JSON).expect("valid generated handler table"));
 
-static SUB_PATTERN: Lazy<Regex> = Lazy::new(|| Regex::new(r"_+").expect("valid regex"));
 static BEFORE_TITLE_MATCH_REGEX: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"^\[([^\[\]]+)\]").expect("valid regex"));
 static DIGITS_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\d+").expect("valid regex"));
@@ -1367,8 +1540,6 @@ static ALT_TITLES_REGEX: Lazy<Regex> = Lazy::new(|| {
     ))
     .expect("valid regex")
 });
-static NOT_ONLY_NON_ENGLISH_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(?!)").expect("valid regex"));
 static NOT_ALLOWED_SYMBOLS_AT_START_AND_END: Lazy<Regex> = Lazy::new(|| {
     Regex::new(&format!(
         r"^[^\w{NON_ENGLISH_CHARS}#\[【★]+|[ \-:/\\\[\|{{(#$&^]+$"
@@ -1487,13 +1658,164 @@ static LANGUAGES_TRANSLATION_TABLE: Lazy<HashMap<&'static str, &'static str>> = 
     ])
 });
 
+fn adult_keywords() -> impl Iterator<Item = &'static str> {
+    include_str!("../data/combined-keywords.txt")
+        .lines()
+        .map(str::trim)
+        .filter(|keyword| !keyword.is_empty())
+}
+
 static ADULT_KEYWORDS: Lazy<AhoCorasick> = Lazy::new(|| {
-    AhoCorasick::new(
-        include_str!("../data/combined-keywords.txt")
-            .lines()
-            .map(str::trim)
-            .filter(|keyword| !keyword.is_empty())
-            .map(str::to_lowercase),
-    )
-    .expect("valid adult keyword automaton")
+    AhoCorasickBuilder::new()
+        .ascii_case_insensitive(true)
+        .build(adult_keywords())
+        .expect("valid adult keyword automaton")
 });
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const EQUIVALENCE_TITLES: &[&str] = &[
+        "Deadpool 2016 1080p BluRay x264 DTS-JYK",
+        "The.Walking.Dead.S05E03.720p.WEB-DL.x264-ASAP[ettv]",
+        "Game.of.Thrones.S01-S08.COMPLETE.1080p.WEB-DL.DDP5.1.H.264-GoT",
+        "[SubsPlease] Sousou no Frieren - 28 (1080p) [F1FF71EB].mkv",
+        "Oppenheimer.2023.IMAX.2160p.UHD.BluRay.REMUX.DV.HDR10.HEVC.TrueHD.7.1.Atmos-FGT",
+        "Spider-Man.No.Way.Home.2021.2160p.WEB-DL.DDP5.1.Atmos.HDR.HEVC-EVO[TGx]",
+        "One Piece - 1071 (1080p) [Multi-Subs] [Dual-Audio] [x264]",
+        "www.Torrenting.com - Anatomy Of A Fall (2023) 1080p WEBRip x265 10bit AAC",
+        "Mission.Impossible.Pentalogy.1996-2015.1080p.BluRay.x264.AAC.5.1",
+        "Мстители: Война бесконечности / Avengers: Infinity War (2018) BDRip 1080p",
+        "(Hi10)_Re_Zero_Shin_Henshuu-ban_-_02v2_(720p)_(DDY)_(72006E34).mkv",
+        "Movie remaſtered uncenſored 720p",
+        "Kelvin K sign 1080p WEB-DL",
+        "Show.S02E04.2024.06.12.GERMAN.DL.2160p.WEB.H265.DV.HDR.DDP5.1",
+        "Title.2024.1080p.BluRay.REMUX.DTS-HD.MA.7.1.TrueHD.Atmos.10bit",
+        "Title S01E01-E08 COMPLETE MULTi DUBBED SUBBED 1080p NF WEB-DL",
+        "Wonder.Woman.1984.2020.3D.1080p.BluRay.x264-SURCODE[rarbg]",
+        "Movie.vietnamese.1080p.WEB-DL",
+        "Movie.norwegian.1080p.BluRay",
+        "004 - Male Unbonding - [DVD].avi",
+        " not to be present for ",
+        "",
+    ];
+
+    #[test]
+    fn prefilter_is_equivalent_to_full_handler_scan() {
+        for title in EQUIVALENCE_TITLES {
+            let filtered = ENGINE
+                .parse_context_impl::<true>(title, false)
+                .expect("filtered parse");
+            let exhaustive = ENGINE
+                .parse_context_impl::<false>(title, false)
+                .expect("exhaustive parse");
+            assert_eq!(filtered.result, exhaustive.result, "{title:?}");
+            assert_eq!(
+                filtered.working_title, exhaustive.working_title,
+                "{title:?}"
+            );
+            assert_eq!(filtered.end_of_title, exhaustive.end_of_title, "{title:?}");
+        }
+
+        let fragments = [
+            "Movie",
+            "S01E02",
+            "1080p",
+            "BluRay",
+            "WEB-DL",
+            "REMUX",
+            "x265",
+            "10bit",
+            "DTS-HD",
+            "Atmos",
+            "MULTi",
+            "sample",
+            "trailer",
+            "COMPLETE",
+            "www.site.com",
+            "XXX",
+            "[Group]",
+            "Мстители",
+            "日本語",
+            "remaſtered",
+            "K",
+            "2024",
+            ".mkv",
+            "-",
+            "_",
+            " ",
+        ];
+        let separators = [".", " ", "-", "_", "/", "[", "]"];
+        let mut state = 0x9e37_79b9_u32;
+        for _ in 0..256 {
+            let mut title = String::new();
+            for _ in 0..2 + state as usize % 7 {
+                state = state.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+                title.push_str(fragments[state as usize % fragments.len()]);
+                state = state.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+                title.push_str(separators[state as usize % separators.len()]);
+            }
+            let filtered = ENGINE
+                .parse_context_impl::<true>(&title, false)
+                .expect("filtered parse");
+            let exhaustive = ENGINE
+                .parse_context_impl::<false>(&title, false)
+                .expect("exhaustive parse");
+            assert_eq!(filtered.result, exhaustive.result, "{title:?}");
+            assert_eq!(
+                filtered.working_title, exhaustive.working_title,
+                "{title:?}"
+            );
+            assert_eq!(filtered.end_of_title, exhaustive.end_of_title, "{title:?}");
+        }
+    }
+
+    #[test]
+    fn clean_title_guards_are_equivalent() {
+        for title in EQUIVALENCE_TITLES {
+            assert_eq!(
+                clean_title_impl::<true>(title),
+                clean_title_impl::<false>(title),
+                "{title:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn parallel_batch_preserves_order_and_results() {
+        let titles: Vec<_> = EQUIVALENCE_TITLES
+            .iter()
+            .copied()
+            .cycle()
+            .take(64)
+            .collect();
+        let expected: Vec<_> = titles
+            .iter()
+            .map(|title| parse_title(title, false).expect("scalar parse"))
+            .collect();
+        assert_eq!(
+            parse_many(titles.iter().copied(), false).expect("batch parse"),
+            expected
+        );
+    }
+
+    #[test]
+    fn prefilter_covers_most_regex_handlers() {
+        let regex_handlers = ENGINE
+            .handlers
+            .iter()
+            .filter(|handler| matches!(handler.kind, RuntimeHandlerKind::Regex(_)))
+            .count();
+        let gated_handlers = ENGINE
+            .handlers
+            .iter()
+            .filter(|handler| handler.gate.is_active())
+            .count();
+        assert_eq!(regex_handlers, 423);
+        assert!(
+            gated_handlers >= 300,
+            "only {gated_handlers} of {regex_handlers} regex handlers are gated"
+        );
+    }
+}
