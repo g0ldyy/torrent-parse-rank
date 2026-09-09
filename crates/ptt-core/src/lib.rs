@@ -38,7 +38,7 @@ pub struct ParseContext {
 
 #[derive(Debug, Clone)]
 struct HandlerMatch {
-    raw_match: String,
+    match_len: usize,
     match_index: usize,
     remove: bool,
     skip_from_title: bool,
@@ -103,6 +103,7 @@ enum TransformSpec {
     RangeXOfYFunc,
     ArrayInteger,
     UniqConcatValue(String),
+    HdrFormat,
     TransformResolution,
 }
 
@@ -119,6 +120,16 @@ struct RuntimeHandler {
     transform: TransformSpec,
     options: HandlerOptions,
     gate: Gate,
+    guard: MatchGuard,
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+enum MatchGuard {
+    #[default]
+    None,
+    AmbiguousMetadata,
+    SitePrefix,
+    UnmarkedSeason,
 }
 
 struct ParserEngine {
@@ -250,9 +261,31 @@ impl ParserEngine {
             serde_json::from_str(json_text).map_err(|e| ParseError::Data(e.to_string()))?;
         let mut handlers = Vec::with_capacity(table.handlers.len());
         let mut gate_specs = Vec::with_capacity(table.handlers.len());
-        for raw in table.handlers {
+        for mut raw in table.handlers {
+            // Keep the generated upstream snapshot intact; these are deliberate
+            // parser corrections applied before compiling both regexes and gates.
+            let guard = match (raw.name.as_str(), raw.pattern.as_deref()) {
+                ("hdr", _) | ("bit_depth", Some(r"\bhdr10\b")) => MatchGuard::AmbiguousMetadata,
+                ("dubbed", Some(r"\bdual\b(?![ .-]*sub)")) => MatchGuard::AmbiguousMetadata,
+                ("site", Some(pattern)) if pattern.contains("com|org|net") => {
+                    MatchGuard::SitePrefix
+                }
+                ("seasons", Some(r"\b(\d{2})[ ._]\d{2}(?:.F)?\.\w{2,4}$")) => {
+                    MatchGuard::UnmarkedSeason
+                }
+                _ => MatchGuard::None,
+            };
+            let is_hdr_format =
+                raw.name == "hdr" && raw.pattern.as_deref() == Some(r"\bHDR(?:10)?\b");
+            if is_hdr_format {
+                raw.pattern = Some(r"\b(?:HDR(?:10)?|HLG)\b".to_owned());
+            }
             let options: HandlerOptions = raw.options.into();
-            let transform = parse_transform(&raw.transform);
+            let transform = if is_hdr_format {
+                TransformSpec::HdrFormat
+            } else {
+                parse_transform(&raw.transform)
+            };
             let kind = match raw.kind.as_str() {
                 "regex" => {
                     let pat = raw
@@ -275,6 +308,7 @@ impl ParserEngine {
                 transform,
                 options,
                 gate: Gate::default(),
+                guard,
             });
         }
         let (prefilter, gates) = Prefilter::build(&gate_specs);
@@ -322,9 +356,14 @@ impl ParserEngine {
                 continue;
             }
             let maybe_match = match &handler.kind {
-                RuntimeHandlerKind::Regex(re) => {
-                    self.apply_regex_handler(handler, re, &title, &mut result, &mut matched)?
-                }
+                RuntimeHandlerKind::Regex(re) => self.apply_regex_handler(
+                    handler,
+                    re,
+                    &title,
+                    end_of_title,
+                    &mut result,
+                    &mut matched,
+                )?,
                 RuntimeHandlerKind::Function(func_name) => self.apply_function_handler(
                     handler,
                     func_name,
@@ -340,8 +379,7 @@ impl ParserEngine {
 
             if match_result.remove {
                 let start = match_result.match_index.min(title.len());
-                let end =
-                    (match_result.match_index + match_result.raw_match.len()).min(title.len());
+                let end = (match_result.match_index + match_result.match_len).min(title.len());
                 if start <= end && title.is_char_boundary(start) && title.is_char_boundary(end) {
                     title.replace_range(start..end, "");
                     if PREFILTER {
@@ -359,7 +397,7 @@ impl ParserEngine {
                 && match_result.skip_from_title
                 && match_result.match_index < end_of_title
             {
-                end_of_title = end_of_title.saturating_sub(match_result.raw_match.len());
+                end_of_title = end_of_title.saturating_sub(match_result.match_len);
             }
         }
 
@@ -405,6 +443,7 @@ impl ParserEngine {
         handler: &RuntimeHandler,
         regex: &PcreRegex,
         title: &str,
+        end_of_title: usize,
         result: &mut Map<String, Value>,
         matched: &mut HashMap<String, MatchInfo>,
     ) -> Result<Option<HandlerMatch>, ParseError> {
@@ -429,13 +468,82 @@ impl ParserEngine {
         let Some(m0) = captures.get(0) else {
             return Ok(None);
         };
-        let raw_match = String::from_utf8_lossy(m0.as_bytes()).into_owned();
+        // PCRE2 UTF mode returns offsets on UTF-8 boundaries. Borrow captures;
+        // only episode/group context needs to retain an owned match.
+        let raw_match = &title[m0.start()..m0.end()];
         let clean_match = captures
             .get(1)
-            .map(|m| String::from_utf8_lossy(m.as_bytes()).into_owned())
-            .unwrap_or_else(|| raw_match.clone());
+            .map(|m| &title[m.start()..m.end()])
+            .unwrap_or(raw_match);
+
+        if handler.name == "year" && is_numeric_title(title.get(..end_of_title).unwrap_or(title)) {
+            return Ok(None);
+        }
+
+        match handler.guard {
+            MatchGuard::AmbiguousMetadata => {
+                let bracketed = title[..m0.start()]
+                    .rfind('[')
+                    .is_some_and(|open| !title[open..m0.start()].contains(']'));
+                if !bracketed {
+                    let has_identity = ["year", "seasons", "episodes"]
+                        .iter()
+                        .any(|key| matched.contains_key(*key));
+                    let episode_marker = if has_identity {
+                        None
+                    } else {
+                        EXPLICIT_EPISODE_RE
+                            .find(title)
+                            .map_err(|e| ParseError::Regex(e.to_string()))?
+                    };
+                    let before_identity = (has_identity && m0.start() < end_of_title)
+                        || episode_marker.is_some_and(|m| m0.start() < m.start());
+                    let has_technical = ["resolution", "quality", "codec"]
+                        .iter()
+                        .any(|key| matched.contains_key(*key));
+                    if before_identity
+                        || (!has_identity && !has_technical && episode_marker.is_none())
+                    {
+                        return Ok(None);
+                    }
+                }
+            }
+            MatchGuard::SitePrefix => {
+                let explicit_www = raw_match
+                    .get(..3)
+                    .is_some_and(|prefix| prefix.eq_ignore_ascii_case("www"));
+                let standalone_domain = !matched.contains_key("year") && raw_match == title.trim();
+                if !explicit_www
+                    && !standalone_domain
+                    && (m0.start() == 0 || raw_match.contains(char::is_whitespace))
+                {
+                    return Ok(None);
+                }
+            }
+            MatchGuard::UnmarkedSeason => {
+                if EXPLICIT_EPISODE_RE
+                    .is_match(title)
+                    .map_err(|e| ParseError::Regex(e.to_string()))?
+                {
+                    return Ok(None);
+                }
+            }
+            MatchGuard::None => {}
+        }
+        if handler.name == "episodes" && !raw_match.chars().any(char::is_alphabetic) {
+            let prefix = title[..m0.start()].trim_end_matches(|c: char| !c.is_alphanumeric());
+            if prefix
+                .rsplit(|c: char| !c.is_alphanumeric())
+                .next()
+                .is_some_and(|word| {
+                    word.eq_ignore_ascii_case("movie") || word.eq_ignore_ascii_case("film")
+                })
+            {
+                return Ok(None);
+            }
+        }
         let existing = result.get(&handler.name);
-        let transformed = transform_value(&handler.transform, &clean_match, existing)?;
+        let transformed = transform_value(&handler.transform, clean_match, existing)?;
         let Some(mut transformed) = transformed else {
             return Ok(None);
         };
@@ -450,7 +558,7 @@ impl ParserEngine {
                 .map_err(|e| ParseError::Regex(e.to_string()))?
             && let Some(g1) = caps.get(1)
         {
-            is_before_title = g1.as_str().contains(&raw_match);
+            is_before_title = g1.as_str().contains(raw_match);
         }
 
         let mut has_other_match = false;
@@ -476,7 +584,7 @@ impl ParserEngine {
             .entry(handler.name.clone())
             .or_insert_with(|| MatchInfo {
                 raw_match: if matches!(handler.name.as_str(), "episodes" | "group") {
-                    raw_match.clone()
+                    raw_match.to_owned()
                 } else {
                     String::new()
                 },
@@ -484,7 +592,7 @@ impl ParserEngine {
             });
         result.insert(handler.name.clone(), transformed);
         Ok(Some(HandlerMatch {
-            raw_match,
+            match_len: raw_match.len(),
             match_index: m0.start(),
             remove: handler.options.remove,
             skip_from_title: is_before_title || handler.options.skip_from_title,
@@ -554,7 +662,7 @@ impl ParserEngine {
                         Value::Array(vec![Value::Number(v.into())]),
                     );
                     return Ok(Some(HandlerMatch {
-                        raw_match: m0.as_str().to_owned(),
+                        match_len: m0.end() - m0.start(),
                         match_index: start_index + m0.start(),
                         remove: true,
                         skip_from_title: false,
@@ -579,7 +687,7 @@ impl ParserEngine {
                     start_indexes.push(m.match_index);
                 }
                 let mut end_indexes = Vec::new();
-                for key in ["resolution", "quality", "codec", "audio"] {
+                for key in ["resolution", "quality", "codec", "audio", "container"] {
                     if let Some(m) = matched.get(key)
                         && m.match_index != 0
                     {
@@ -593,6 +701,9 @@ impl ParserEngine {
                     .min()
                     .unwrap_or(title.len());
                 let beginning_title = title.get(..end_index).unwrap_or(title);
+                if is_numeric_title(beginning_title) {
+                    return Ok(None);
+                }
                 let middle_title = title.get(start_index..end_index).unwrap_or(beginning_title);
 
                 let beginning_caps = HANDLE_EPISODES_BEGINNING_RE
@@ -638,7 +749,7 @@ impl ParserEngine {
                         if let Some(m0) = m0 {
                             let idx = title.find(m0.as_str()).unwrap_or(0);
                             return Ok(Some(HandlerMatch {
-                                raw_match: m0.as_str().to_owned(),
+                                match_len: m0.end() - m0.start(),
                                 match_index: idx,
                                 remove: false,
                                 skip_from_title: false,
@@ -668,7 +779,7 @@ impl ParserEngine {
                         Value::Array(vec![Value::Number(n.into())]),
                     );
                     return Ok(Some(HandlerMatch {
-                        raw_match: m.as_str().to_owned(),
+                        match_len: m.end() - m.start(),
                         match_index: m.start(),
                         remove: false,
                         skip_from_title: false,
@@ -761,7 +872,7 @@ fn transform_value(
                 Some(Value::String(val.clone()))
             }
         }
-        TransformSpec::RangeFunc => range_func(input).map(Value::Array),
+        TransformSpec::RangeFunc => expand_number_range(input).map(|numbers| json!(numbers)),
         TransformSpec::RangeXOfYFunc => range_x_of_y_func(input).map(Value::Array),
         TransformSpec::ArrayInteger => {
             let item = integer_transform(input)
@@ -769,14 +880,20 @@ fn transform_value(
                 .unwrap_or(Value::Null);
             Some(Value::Array(vec![item]))
         }
-        TransformSpec::UniqConcatValue(v) => {
+        TransformSpec::UniqConcatValue(_) | TransformSpec::HdrFormat => {
+            let v = match spec {
+                TransformSpec::UniqConcatValue(value) => value.as_str(),
+                _ if input.eq_ignore_ascii_case("HDR10") => "HDR10",
+                _ if input.eq_ignore_ascii_case("HLG") => "HLG",
+                _ => "HDR",
+            };
             let mut existing_vec = existing
                 .and_then(Value::as_array)
                 .cloned()
                 .unwrap_or_default();
-            let exists = existing_vec.iter().any(|e| e.as_str() == Some(v.as_str()));
+            let exists = existing_vec.iter().any(|e| e.as_str() == Some(v));
             if !exists {
-                existing_vec.push(Value::String(v.clone()));
+                existing_vec.push(Value::String(v.to_owned()));
             }
             Some(Value::Array(existing_vec))
         }
@@ -804,43 +921,68 @@ fn first_integer_transform(input: &str) -> Option<i64> {
 
 const MAX_EXPANDED_RANGE_ITEMS: i64 = 10_000;
 
-fn range_func(input: &str) -> Option<Vec<Value>> {
-    let numbers: Vec<i64> = DIGITS_RE
-        .find_iter(input)
-        .filter_map(Result::ok)
-        .filter_map(|m| m.as_str().parse::<i64>().ok())
-        .collect();
+fn is_numeric_title(title: &str) -> bool {
+    let bare = title.trim_matches(|c: char| c.is_whitespace() || c == '.');
+    // Keep a standalone four-digit identity; a leading zero is episode evidence.
+    bare.len() == 4 && !bare.starts_with('0') && bare.bytes().all(|byte| byte.is_ascii_digit())
+}
 
-    if numbers.len() == 2
-        && numbers[0] < numbers[1]
-        && numbers[1]
-            .checked_sub(numbers[0])
-            .and_then(|span| span.checked_add(1))
-            .is_some_and(|length| length <= MAX_EXPANDED_RANGE_ITEMS)
+/// Expand marked numeric ranges and preserve explicit lists, with a bounded result.
+pub fn expand_number_range(input: &str) -> Option<Vec<i64>> {
+    let mut matches = DIGITS_RE.find_iter(input);
+    let first = matches.next()?.ok()?;
+    let mut previous = first.as_str().parse::<i64>().ok()?;
+    let mut previous_end = first.end();
+    let mut numbers = vec![previous];
+    let mut unmarked_list = false;
+    for next in matches {
+        let next = next.ok()?;
+        let number = next.as_str().parse::<i64>().ok()?;
+        let separator = &input[previous_end..next.start()];
+        let is_range = separator.contains(['-', '~', ':', 'à'])
+            || separator.split(|c: char| !c.is_alphabetic()).any(|word| {
+                ["a", "ao", "to"]
+                    .iter()
+                    .any(|marker| word.eq_ignore_ascii_case(marker))
+            });
+        if is_range {
+            let length = number.checked_sub(previous)?;
+            if length <= 0 || length > MAX_EXPANDED_RANGE_ITEMS - numbers.len() as i64 {
+                return None;
+            }
+            numbers.extend(previous + 1..=number);
+        } else {
+            let is_list = separator.contains(['&', '+', ',', '/'])
+                || ["s", "e", "ep", "x", "х", "and"].iter().any(|marker| {
+                    separator
+                        .trim_matches([' ', '.'])
+                        .eq_ignore_ascii_case(marker)
+                });
+            let unmarked = separator.chars().all(|c| c.is_whitespace() || c == '.');
+            if (!is_list && !unmarked) || numbers.len() >= MAX_EXPANDED_RANGE_ITEMS as usize {
+                return None;
+            }
+            unmarked_list |= unmarked;
+            numbers.push(number);
+        }
+        previous = number;
+        previous_end = next.end();
+    }
+    // Two unmarked numbers can be a season/episode pair ("Season 11 01").
+    // Preserve only unambiguous contiguous lists with at least three entries.
+    if unmarked_list
+        && (numbers.len() < 3
+            || !numbers
+                .windows(2)
+                .all(|pair| pair[0].checked_add(1) == Some(pair[1])))
     {
-        return Some(
-            (numbers[0]..=numbers[1])
-                .map(|n| Value::Number(n.into()))
-                .collect(),
-        );
+        return None;
     }
-    if numbers.len() > 2 && numbers.windows(2).all(|w| w[0] + 1 == w[1]) {
-        return Some(
-            numbers
-                .into_iter()
-                .map(|n| Value::Number(n.into()))
-                .collect(),
-        );
+    if numbers.len() > 1 {
+        let mut seen = HashSet::with_capacity(numbers.len());
+        numbers.retain(|n| seen.insert(*n));
     }
-    if numbers.len() == 1 {
-        return Some(
-            numbers
-                .into_iter()
-                .map(|n| Value::Number(n.into()))
-                .collect(),
-        );
-    }
-    None
+    Some(numbers)
 }
 
 fn site_tld_lang_code(tld: &str) -> Option<&'static str> {
@@ -1314,7 +1456,10 @@ fn normalize_mixed_script_title(mut title: String) -> String {
     // Strip leading non-Latin prefix when title later contains Latin.
     if let Some((idx, _)) = title.char_indices().find(|(_, c)| c.is_ascii_alphabetic()) {
         let prefix = &title[..idx];
-        if has_non_english(prefix) && !has_latin(prefix) {
+        if has_non_english(prefix)
+            && !has_latin(prefix)
+            && prefix.chars().last().is_some_and(|c| !c.is_alphanumeric())
+        {
             title = title[idx..]
                 .trim_start_matches(|c: char| c.is_whitespace() || "-_[](){}./".contains(c))
                 .to_owned();
@@ -1505,6 +1650,10 @@ static ENGINE: Lazy<ParserEngine> =
 static BEFORE_TITLE_MATCH_REGEX: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"^\[([^\[\]]+)\]").expect("valid regex"));
 static DIGITS_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\d+").expect("valid regex"));
+static EXPLICIT_EPISODE_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"(?i)\b(?:[st]\d{1,3}(?:[ ._-]*e\d{1,4})?|e(?:p(?:isode)?)?[ ._-]*\d{1,4})\b")
+        .expect("valid regex")
+});
 static NON_WORD_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\W+").expect("valid regex"));
 static LATIN_IN_PARENS_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"\(([^()]*)\)").expect("valid regex"));

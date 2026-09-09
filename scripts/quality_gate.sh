@@ -31,8 +31,8 @@ echo "[3/7] Rust check"
 cargo check -q
 
 echo "[4/7] Python format + lint"
-uv run ruff format --check python scripts parity_tests/local
-uv run ruff check python scripts parity_tests/local
+uv run ruff format --check python scripts parity_tests
+uv run ruff check python scripts parity_tests
 
 echo "[5/7] Build release native extension"
 uv run maturin develop --release

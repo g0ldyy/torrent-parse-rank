@@ -2,6 +2,8 @@ import re
 from collections.abc import Callable
 from datetime import datetime
 
+from torrent_parse_rank_native import ptt_expand_number_range
+
 MAX_EXPANDED_RANGE_ITEMS = 10_000
 
 
@@ -136,21 +138,7 @@ def date(date_format: str | list[str]) -> Callable[[str], str | None]:
 
 
 def range_func(input_str: str) -> list[int] | None:
-    input_str = _require_string(input_str)
-    numbers = [int(x) for x in re.findall(r"\d+", input_str)]
-
-    if (
-        len(numbers) == 2
-        and numbers[0] < numbers[1]
-        and numbers[1] - numbers[0] + 1 <= MAX_EXPANDED_RANGE_ITEMS
-    ):
-        return list(range(numbers[0], numbers[1] + 1))
-    if len(numbers) > 2 and all(numbers[i] + 1 == numbers[i + 1] for i in range(len(numbers) - 1)):
-        return numbers
-    if len(numbers) == 1:
-        return numbers
-
-    return None
+    return ptt_expand_number_range(_require_string(input_str))
 
 
 def range_x_of_y_func(input_str: str) -> list[int] | None:

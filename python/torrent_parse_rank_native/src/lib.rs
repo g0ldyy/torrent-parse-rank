@@ -1,8 +1,8 @@
 use std::collections::BTreeSet;
 
 use ptt_core::{
-    clean_title_native, languages_translation_table, parse_many, parse_title, parse_title_context,
-    translate_langs_codes,
+    clean_title_native, expand_number_range, languages_translation_table, parse_many, parse_title,
+    parse_title_context, translate_langs_codes,
 };
 use pyo3::exceptions::{PyTypeError, PyValueError};
 use pyo3::prelude::*;
@@ -460,6 +460,7 @@ fn rtn_calculate_preferred_langs(data_json: &str, settings_json: &str) -> PyResu
 
 #[pymodule]
 fn _native(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(ptt_expand_number_range, m)?)?;
     m.add_function(wrap_pyfunction!(ptt_parse_title, m)?)?;
     m.add_function(wrap_pyfunction!(ptt_parse_title_context, m)?)?;
     m.add_function(wrap_pyfunction!(ptt_parse_many, m)?)?;
@@ -503,4 +504,9 @@ fn _native(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(rtn_calculate_preferred_langs, m)?)?;
 
     Ok(())
+}
+
+#[pyfunction]
+fn ptt_expand_number_range(input: &str) -> Option<Vec<i64>> {
+    expand_number_range(input)
 }

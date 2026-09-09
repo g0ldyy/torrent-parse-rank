@@ -159,7 +159,7 @@ fn codec_key(codec: &str) -> Option<&'static str> {
 fn hdr_key(hdr: &str) -> Option<&'static str> {
     match hdr {
         "DV" => Some("dolby_vision"),
-        "HDR" => Some("hdr"),
+        "HDR" | "HDR10" | "HLG" => Some("hdr"),
         "HDR10+" => Some("hdr10plus"),
         "SDR" => Some("sdr"),
         _ => None,
@@ -386,6 +386,9 @@ pub fn parse(raw_title: &str, translate_langs: bool) -> Result<Map<String, Value
         .remove("3d")
         .and_then(|value| value.as_bool())
         .unwrap_or(false);
+    if let Some(converted) = data.remove("convert") {
+        data.insert("converted".to_owned(), converted);
+    }
 
     data.insert(
         "raw_title".to_string(),
@@ -1071,9 +1074,12 @@ pub fn calculate_codec_rank(
 
 pub fn calculate_hdr_rank(data: &Map<String, Value>, settings: &Value, rank_model: &Value) -> i64 {
     let mut total = 0;
+    let mut ranked = HashSet::new();
 
     for hdr in map_array(data, "hdr").iter().filter_map(Value::as_str) {
-        if let Some(key) = hdr_key(hdr) {
+        if let Some(key) = hdr_key(hdr)
+            && ranked.insert(key)
+        {
             total += rank_or_custom(rank_model, settings, "hdr", key, key);
         }
     }

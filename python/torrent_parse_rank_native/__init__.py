@@ -1,5 +1,6 @@
 from ._native import (
     ptt_clean_title,
+    ptt_expand_number_range,
     ptt_languages_translation_table,
     ptt_parse_many,
     ptt_parse_title,
@@ -8,6 +9,7 @@ from ._native import (
 )
 
 __all__ = [
+    "ptt_expand_number_range",
     "ptt_parse_title",
     "ptt_parse_title_context",
     "ptt_parse_many",
