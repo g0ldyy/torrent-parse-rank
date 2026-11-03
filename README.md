@@ -109,33 +109,3 @@ Python API speedup vs upstream (`PTT` + `RTN`): **~19.88x** geometric-mean throu
 | `RTN.parse` | 1,708.8 | 30,284.9 | 17.72x | 0.590 | 0.032 |
 
 Full benchmark report: [`benchmarks/README.md`](benchmarks/README.md)
-
-## IMDb and anime matching
-
-`MediaMatch` adds an optional local SQLite metadata index. It uses RTN's existing
-parser to normalize torrent titles; matching metadata does not alter RTN ranking.
-IMDb matching supports IMDb's official `title.basics`, `title.akas`, and optional
-`title.episode` TSV exports, with year, duplicate-title original/US preferences,
-category filtering, and season-aware series matching. AniDB cross-ID data can be
-loaded from the provided TSV schema or the manami-project anime-offline-database
-JSON export; AniDB/TVDB episode crosswalk columns are also supported in TSV.
-
-```python
-from MediaMatch import MetadataIndex
-from MediaMatch.api import match_title
-
-index = MetadataIndex("metadata.sqlite3")
-matches = match_title(index, "Dune 2021 2160p", year=2021)
-```
-
-```sh
-media-match --db metadata.sqlite3 update-imdb
-media-match --db metadata.sqlite3 update-anime
-media-match --db metadata.sqlite3 match "Cowboy Bebop 1998"
-media-match --db metadata.sqlite3 serve --host 127.0.0.1 --port 8765
-```
-
-The HTTP endpoint is `GET /match?title=...&year=...`. A scheduled GitHub workflow
-refreshes both source datasets and publishes the generated SQLite index as a
-30-day workflow artifact. For a persistent local service, schedule `update-all`
-with your operating system's task scheduler.

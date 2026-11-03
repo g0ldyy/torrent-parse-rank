@@ -24,9 +24,6 @@ classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
 ]
 
-[project.scripts]
-media-match = "MediaMatch.cli:main"
-
 [project.urls]
 Homepage = "https://github.com/g0ldyy/torrent-parse-rank"
 Issues = "https://github.com/g0ldyy/torrent-parse-rank/issues"
@@ -41,7 +38,7 @@ dev = [
 [tool.maturin]
 manifest-path = "python/torrent_parse_rank_native/Cargo.toml"
 python-source = "python"
-python-packages = ["torrent_parse_rank_native", "PTT", "RTN", "MediaMatch"]
+python-packages = ["torrent_parse_rank_native", "PTT", "RTN"]
 include = [
     { path = "LICENSE", format = "sdist" },
     { path = "LICENSE", format = "wheel" },
