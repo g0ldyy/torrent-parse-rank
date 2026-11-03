@@ -1,0 +1,41 @@
+name: Refresh IMDb metadata
+
+on:
+  schedule:
+    - cron: '23 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-sources:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/cache@v4
+        with:
+          path: metadata.sqlite3
+          key: metadata-index-v1-${{ github.run_id }}
+          restore-keys: metadata-index-v1-
+      - name: Download and verify IMDb source exports
+        run: |
+          mkdir -p .metadata
+          for name in title.basics title.akas title.episode; do
+            curl --fail --location --retry 3 "https://datasets.imdbws.com/${name}.tsv.gz" -o ".metadata/${name}.tsv.gz"
+            gzip -t ".metadata/${name}.tsv.gz"
+          done
+      - name: Build and refresh local metadata index
+        run: |
+          pip install .
+          media-match --db metadata.sqlite3 import-imdb .metadata/title.basics.tsv.gz .metadata/title.akas.tsv.gz --episodes .metadata/title.episode.tsv.gz
+          media-match --db metadata.sqlite3 update-anime
+      - uses: actions/upload-artifact@v4
+        with:
+          name: metadata-index-${{ github.run_number }}
+          path: metadata.sqlite3
+          retention-days: 30
